@@ -1,784 +1,631 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import {
-  Car,
-  CheckCircle,
-  Clock,
-  ShieldCheck,
-  CreditCard,
-  Sparkles,
-  TrendingUp,
-  DollarSign,
-  Zap,
-  Target,
-  Sliders,
-  X,
-  Lightbulb,
-  ArrowRight,
-  Filter,
-  Search,
-} from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-const CATEGORIES = [
-  'SUV', 'Sedan', 'EV', 'Luxury', 'Sports',
-  'Hybrid', 'Compact', 'Truck', 'Minivan', 'Convertible',
-];
+const CATEGORIES = ['All', 'SUV', 'Sedan', 'Sports', 'EV', 'Luxury', 'Hybrid', 'Compact', 'Truck', 'Minivan', 'Convertible'];
 
-// Modern gradient backgrounds
-const gradients = {
-  primary: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-  accent: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-  success: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-  dark: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-  card: 'linear-gradient(145deg, #1e293b 0%, #0f172a 100%)',
+// Figma Design Colors
+const colors = {
+  carbon: '#0d0d0f',
+  carbon800: '#18181c',
+  carbon700: '#222228',
+  carbon600: '#2e2e38',
+  carbon500: '#44444f',
+  surface: '#f4f3ef',
+  surface100: '#eae9e3',
+  amber: '#e8a020',
+  amberLight: '#f5bf5a',
+  amberDark: '#b87c10',
+  sand: '#c8b99a',
 };
 
-const inputStyle = {
-  width: '100%',
-  padding: '12px 16px',
-  borderRadius: '10px',
-  background: '#0f172a',
-  color: '#fff',
-  border: '1px solid #334155',
-  fontSize: '14px',
-  transition: 'all 0.3s ease',
-};
-
-const labelStyle = {
-  fontSize: '12px',
-  color: '#94a3b8',
-  marginBottom: '6px',
-  display: 'block',
-  fontWeight: 500,
-};
-
-function StatusIcon({ status }) {
-  if (status === 'COMPLETED') return <CheckCircle size={16} color="#22c55e" />;
-  if (status === 'IN_PROGRESS') return <Clock size={16} color="#38bdf8" />;
-  return <Clock size={16} color="#64748b" />;
+function genSessionId() {
+  return `sess_${Math.random().toString(36).slice(2)}_${Date.now()}`;
 }
 
-function PreferencePanel({ app, onSubmit, loading, onUpdate }) {
-  const fields = app.fields || {};
-  const budgetField = fields.budget || {};
-  const [intent, setIntent] = useState('Rent');
-  const [isMinimized, setIsMinimized] = useState(false);
-
-  const isRent = intent === 'Rent';
-  const budgetLabel = isRent
-    ? (budgetField.label_rent || 'Max Daily Rental Rate ($/day)')
-    : (budgetField.label_buy || 'Max Purchase Budget ($ total)');
-  const budgetDefault = isRent
-    ? (budgetField.default_rent || 200)
-    : (budgetField.default_buy || 60000);
-  const budgetMin = isRent ? (budgetField.min_rent || 50) : (budgetField.min_buy || 15000);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const fd = new FormData(e.target);
-    const data = Object.fromEntries(fd.entries());
-    // Add the intent state to the form data
-    data.intent = intent;
-    onSubmit(e, data);
-  };
-
-  if (isMinimized) {
-    return (
-      <div style={{
-        background: gradients.card,
-        border: '1px solid #334155',
-        borderRadius: '12px',
-        padding: '16px',
-        cursor: 'pointer',
-        transition: 'all 0.3s ease',
-      }}
-      onClick={() => setIsMinimized(false)}
-      onMouseEnter={(e) => e.currentTarget.style.borderColor = '#667eea'}
-      onMouseLeave={(e) => e.currentTarget.style.borderColor = '#334155'}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '10px',
-              background: gradients.primary,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-              <Sliders size={18} color="#fff" />
-            </div>
-            <div>
-              <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#f8fafc' }}>
-                Preferences
-              </div>
-              <div style={{ fontSize: '11px', color: '#94a3b8' }}>
-                {intent} • SUV • ${budgetDefault}
-              </div>
-            </div>
-          </div>
-          <ArrowRight size={18} color="#94a3b8" />
-        </div>
-      </div>
-    );
-  }
-
+// Stars Component
+function Stars({ rating }) {
   return (
-    <div style={{
-      background: gradients.card,
-      border: '1px solid #334155',
-      borderRadius: '16px',
-      padding: '24px',
-      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '12px',
-            background: gradients.primary,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)',
-          }}>
-            <Sliders size={20} color="#fff" />
-          </div>
-          <div>
-            <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '16px', fontWeight: 'bold' }}>
-              Your Preferences
-            </h3>
-            <div style={{ fontSize: '12px', color: '#94a3b8' }}>
-              Customize your search
-            </div>
-          </div>
-        </div>
-        <button
-          onClick={() => setIsMinimized(true)}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: '#94a3b8',
-            cursor: 'pointer',
-            padding: '8px',
-            borderRadius: '8px',
-          }}
-        >
-          <X size={18} />
-        </button>
-      </div>
-
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-        <input type="hidden" name="intent" value={intent} />
-        <div>
-          <label style={labelStyle}>{fields.intent?.label || 'Intent'}</label>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            {['Rent', 'Buy'].map((option) => (
-              <button
-                key={option}
-                type="button"
-                onClick={() => {
-                  setIntent(option);
-                  // Update the hidden input
-                  const hiddenInput = document.querySelector('input[name="intent"]');
-                  if (hiddenInput) hiddenInput.value = option;
-                  if (onUpdate) onUpdate({ intent: option });
-                }}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  borderRadius: '10px',
-                  border: intent === option ? '2px solid #f5576c' : '1px solid #334155',
-                  background: intent === option ? 'rgba(245, 87, 108, 0.2)' : '#0f172a',
-                  color: intent === option ? '#f5576c' : '#94a3b8',
-                  fontWeight: intent === option ? 'bold' : 'normal',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                }}
-              >
-                {option}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <label style={labelStyle}>{fields.category?.label || 'Category'}</label>
-          <select
-            name="category"
-            defaultValue="SUV"
-            style={inputStyle}
-            onChange={(e) => onUpdate && onUpdate({ category: e.target.value })}
-          >
-            {(fields.category?.options || CATEGORIES).map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label style={labelStyle}>{budgetLabel}</label>
-          <input
-            type="number"
-            name="budget"
-            key={intent}
-            defaultValue={budgetDefault}
-            min={budgetMin}
-            step={isRent ? 10 : 1000}
-            style={inputStyle}
-            onChange={(e) => onUpdate && onUpdate({ budget: e.target.value })}
+    <span style={{ display: 'flex', gap: '2px' }}>
+      {[1, 2, 3, 4, 5].map((n) => (
+        <svg key={n} width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path
+            d="M6 1l1.39 2.82 3.11.45-2.25 2.19.53 3.09L6 8.02 3.22 9.55l.53-3.09L1.5 4.27l3.11-.45L6 1z"
+            fill={n <= Math.round(rating) ? colors.amber : 'none'}
+            stroke={n <= Math.round(rating) ? colors.amber : colors.carbon500}
+            strokeWidth="1"
           />
-          <div style={{
-            marginTop: '8px',
-            padding: '8px 12px',
-            background: 'rgba(56, 189, 248, 0.1)',
-            borderRadius: '8px',
-            fontSize: '11px',
-            color: '#38bdf8',
-          }}>
-            💡 {isRent
-              ? 'Try $100–$500/day for available rentals'
-              : 'Try $20,000–$100,000 for available vehicles'}
-          </div>
-        </div>
-
-        <div>
-          <label style={labelStyle}>{fields.target_date?.label || 'Target Date'}</label>
-          <input
-            type="date"
-            name="target_date"
-            style={inputStyle}
-            required
-          />
-        </div>
-
-        <button
-          type="submit"
-          disabled={loading}
-          style={{
-            background: loading ? '#475569' : gradients.primary,
-            color: '#fff',
-            fontWeight: 'bold',
-            border: 'none',
-            padding: '14px',
-            borderRadius: '10px',
-            cursor: loading ? 'not-allowed' : 'pointer',
-            fontSize: '15px',
-            boxShadow: loading ? 'none' : '0 4px 12px rgba(102, 126, 234, 0.4)',
-            transition: 'all 0.3s ease',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-          }}
-        >
-          {loading ? (
-            <>
-              <Clock size={18} className="animate-spin" />
-              Processing...
-            </>
-          ) : (
-            <>
-              <Target size={18} />
-              Find Cars
-            </>
-          )}
-        </button>
-      </form>
-    </div>
+        </svg>
+      ))}
+    </span>
   );
 }
 
-function CarCard({ car, onCheckout }) {
+// Car Card Component
+function CarCard({ car, onSelect, intent }) {
+  const displayPrice = intent === 'Rent' 
+    ? (car.daily_rental_rate || (car.purchase_price ? Math.round(car.purchase_price * 0.01) : 0))
+    : car.purchase_price;
+  const priceLabel = intent === 'Rent' 
+    ? '/ day' 
+    : 'total';
+  
+  // Fallback image based on car make
+  const fallbackImages = {
+    'Audi': 'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=800&h=500&fit=crop&auto=format',
+    'Lexus': 'https://images.unsplash.com/photo-1520031441872-26546a6b9270?w=800&h=500&fit=crop&auto=format',
+    'Dodge': 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800&h=500&fit=crop&auto=format',
+    'BMW': 'https://images.unsplash.com/photo-1555215695-3004980ad54e?w=800&h=500&fit=crop&auto=format',
+    'Mercedes': 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=800&h=500&fit=crop&auto=format',
+    'Tesla': 'https://images.unsplash.com/photo-1560958089-b8a1929cea89?w=800&h=500&fit=crop&auto=format',
+    'Genesis': 'https://images.unsplash.com/photo-1619767886558-efdc259cde1a?w=800&h=500&fit=crop&auto=format',
+    'Buick': 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=800&h=500&fit=crop&auto=format',
+    'Subaru': 'https://images.unsplash.com/photo-1619682817481-e994891cd1f5?w=800&h=500&fit=crop&auto=format',
+    'GMC': 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800&h=500&fit=crop&auto=format',
+    'Kia': 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=800&h=500&fit=crop&auto=format',
+    'Fiat': 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800&h=500&fit=crop&auto=format',
+    'Ferrari': 'https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=800&h=500&fit=crop&auto=format',
+    'Jeep': 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800&h=500&fit=crop&auto=format',
+    'default': 'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=800&h=500&fit=crop&auto=format',
+  };
+  
+  const imageUrl = car.image_url || fallbackImages[car.make] || fallbackImages['default'];
   return (
     <div
+      onClick={() => onSelect(car)}
       style={{
-        background: gradients.card,
-        border: '1px solid #334155',
+        background: colors.carbon800,
         borderRadius: '16px',
         overflow: 'hidden',
-        transition: 'all 0.3s ease',
         cursor: 'pointer',
+        border: `1px solid ${colors.carbon700}`,
+        transition: 'all 0.3s ease',
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-8px)';
-        e.currentTarget.style.boxShadow = '0 12px 40px rgba(102, 126, 234, 0.3)';
-        e.currentTarget.style.borderColor = '#667eea';
+        e.currentTarget.style.transform = 'translateY(-4px)';
+        e.currentTarget.style.borderColor = colors.amber;
+        e.currentTarget.style.boxShadow = '0 8px 32px rgba(232, 160, 32, 0.3)';
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = 'translateY(0)';
+        e.currentTarget.style.borderColor = colors.carbon700;
         e.currentTarget.style.boxShadow = 'none';
-        e.currentTarget.style.borderColor = '#334155';
       }}
     >
-      <div style={{ height: '200px', overflow: 'hidden', position: 'relative' }}>
-        <img
-          src={car.image_url || 'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=800'}
-          alt={car.title}
+      <div style={{ position: 'relative', overflow: 'hidden', background: colors.carbon, height: '192px' }}>
+        <img 
+          src={imageUrl} 
+          alt={`${car.make} ${car.model}`} 
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
-        {car.source === 'api' && (
-          <div style={{
+        {car.source === 'auto_dev' && (
+          <span style={{
             position: 'absolute',
             top: '12px',
-            right: '12px',
-            background: 'rgba(34, 197, 94, 0.9)',
-            color: '#fff',
+            left: '12px',
+            background: colors.amber,
+            color: colors.carbon,
+            fontSize: '11px',
+            fontWeight: '700',
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
             padding: '4px 10px',
             borderRadius: '20px',
-            fontSize: '11px',
-            fontWeight: 'bold',
-            backdropFilter: 'blur(8px)',
           }}>
             Live Data
-          </div>
+          </span>
         )}
+        <span style={{
+          position: 'absolute',
+          top: '12px',
+          right: '12px',
+          background: 'rgba(13, 13, 15, 0.8)',
+          color: 'rgba(244, 243, 239, 0.7)',
+          fontSize: '11px',
+          fontWeight: '600',
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          padding: '4px 10px',
+          borderRadius: '20px',
+        }}>
+          {car.category}
+        </span>
       </div>
       <div style={{ padding: '20px' }}>
-        <h4 style={{ margin: '0 0 8px 0', fontSize: '18px', color: '#f8fafc', fontWeight: 'bold' }}>
-          {car.title}
-        </h4>
-        <div style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '16px' }}>
-          {car.year} • {car.category}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-          <div style={{ 
-            fontSize: '24px', 
-            fontWeight: 'bold', 
-            background: gradients.primary,
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-            color: 'transparent'
-          }}>
-            {car.price_display}
-          </div>
-        </div>
-        <button
-          onClick={() => onCheckout(car)}
-          style={{
-            width: '100%',
-            background: gradients.primary,
-            color: '#fff',
-            fontWeight: 'bold',
-            border: 'none',
-            padding: '12px',
-            borderRadius: '10px',
-            cursor: 'pointer',
-            fontSize: '14px',
-            transition: 'all 0.3s ease',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-          }}
-          onMouseEnter={(e) => e.target.style.background = 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)'}
-          onMouseLeave={(e) => e.target.style.background = gradients.primary}
-        >
-          <Car size={18} />
-          Book Now
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function LiveResultsPanel({ cars, onCheckout, statusSteps, hasSubmitted }) {
-  if (!hasSubmitted) {
-    return (
-      <div style={{
-        background: gradients.card,
-        border: '1px solid #334155',
-        borderRadius: '16px',
-        padding: '60px 40px',
-        textAlign: 'center',
-      }}>
-        <div style={{
-          width: '100px',
-          height: '100px',
-          borderRadius: '50%',
-          background: gradients.primary,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          margin: '0 auto 24px',
-          boxShadow: '0 8px 32px rgba(102, 126, 234, 0.4)',
-        }}>
-          <Car size={48} color="#fff" />
-        </div>
-        <h3 style={{ margin: '0 0 12px 0', fontSize: '24px', color: '#f8fafc', fontWeight: 'bold' }}>
-          Find Your Perfect Car
-        </h3>
-        <p style={{ fontSize: '16px', color: '#94a3b8', marginBottom: '32px', lineHeight: 1.6 }}>
-          AI-powered car matching with real-time market data
-        </p>
-        <div style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '10px',
-          padding: '12px 20px',
-          background: 'rgba(102, 126, 234, 0.2)',
-          borderRadius: '10px',
-          color: '#667eea',
-          fontWeight: '600',
-          border: '1px solid rgba(102, 126, 234, 0.3)',
-        }}>
-          <Sliders size={18} />
-          Set your preferences to get started
-        </div>
-      </div>
-    );
-  }
-
-  if (!cars || cars.length === 0) {
-    return (
-      <div style={{
-        background: gradients.card,
-        border: '1px solid #334155',
-        borderRadius: '16px',
-        padding: '60px 40px',
-        textAlign: 'center',
-      }}>
-        <div style={{
-          width: '80px',
-          height: '80px',
-          borderRadius: '50%',
-          background: gradients.success,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          margin: '0 auto 20px',
-          boxShadow: '0 8px 24px rgba(79, 172, 254, 0.4)',
-        }}>
-          <Search size={40} color="#fff" />
-        </div>
-        <h3 style={{ margin: '0 0 12px 0', fontSize: '20px', color: '#f8fafc' }}>
-          Searching for Cars
-        </h3>
-        <p style={{ fontSize: '14px', color: '#94a3b8', marginBottom: '24px' }}>
-          AI is finding the best matches for you...
-        </p>
-        {statusSteps.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
-            {statusSteps.map((s, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#94a3b8' }}>
-                <StatusIcon status={s.status} />
-                <span>{s.step}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '12px',
-            background: gradients.success,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 4px 12px rgba(79, 172, 254, 0.4)',
-          }}>
-            <Car size={20} color="#fff" />
-          </div>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '4px' }}>
           <div>
-            <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '18px', fontWeight: 'bold' }}>
-              Live Results
+            <p style={{
+              color: colors.sand,
+              fontSize: '11px',
+              fontWeight: '600',
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              marginBottom: '2px',
+            }}>
+              {car.make}
+            </p>
+            <h3 style={{
+              color: colors.surface,
+              fontSize: '20px',
+              fontWeight: '800',
+              lineHeight: '1.2',
+              margin: 0,
+            }}>
+              {car.model}
             </h3>
-            <div style={{ fontSize: '12px', color: '#94a3b8' }}>
-              {cars.length} cars found
-            </div>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <p style={{
+              color: colors.amber,
+              fontSize: '24px',
+              fontWeight: '700',
+              lineHeight: '1',
+              margin: 0,
+            }}>
+              ${displayPrice?.toLocaleString() || '0'}
+            </p>
+            <p style={{ color: colors.carbon500, fontSize: '12px', marginTop: '2px' }}>
+              {priceLabel}
+            </p>
           </div>
         </div>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '8px 16px',
-          background: 'rgba(34, 197, 94, 0.1)',
-          borderRadius: '20px',
-          border: '1px solid rgba(34, 197, 94, 0.3)',
-        }}>
-          <Zap size={16} color="#22c55e" />
-          <span style={{ fontSize: '12px', color: '#22c55e', fontWeight: '600' }}>
-            Live
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px', marginBottom: '16px' }}>
+          <Stars rating={car.rating} />
+          <span style={{ color: colors.surface, fontSize: '14px', fontWeight: '600' }}>{car.rating}</span>
+        </div>
+        <div style={{ display: 'flex', gap: '16px', borderTop: `1px solid ${colors.carbon700}`, paddingTop: '16px' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: colors.sand, fontSize: '12px' }}>
+            <span style={{ fontSize: '16px' }}>👤</span>{car.seating_capacity} seats
+          </span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: colors.sand, fontSize: '12px' }}>
+            <span style={{ fontSize: '16px' }}>⚡</span>{car.ev_range > 0 ? `${car.ev_range} mi` : 'Auto'}
+          </span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: colors.sand, fontSize: '12px' }}>
+            <span style={{ fontSize: '16px' }}>🛞</span>{car.year}
           </span>
         </div>
       </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
-        {cars.map((car) => (
-          <CarCard key={car.id} car={car} onCheckout={onCheckout} />
-        ))}
-      </div>
     </div>
   );
 }
 
-function AIInsightsPanel({ messages, statusSteps }) {
-  const [isExpanded, setIsExpanded] = useState(true);
+// Booking Modal Component
+function BookingModal({ car, onClose, intent }) {
+  const [step, setStep] = useState('details');
+  const [pickup, setPickup] = useState('');
+  const [dropoff, setDropoff] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
+  const days = startDate && endDate
+    ? Math.max(1, Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / 86400000))
+    : 1;
+  
+  const basePrice = intent === 'Rent' 
+    ? (car.daily_rental_rate || (car.purchase_price ? car.purchase_price * 0.01 : 0))
+    : car.purchase_price;
+  const subtotal = basePrice * days;
+  const insurance = Math.round(subtotal * 0.12);
+  const total = subtotal + insurance;
+  const canProceed = pickup && dropoff && startDate && endDate;
+  
+  // Fallback image based on car make
+  const fallbackImages = {
+    'Audi': 'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=800&h=500&fit=crop&auto=format',
+    'Lexus': 'https://images.unsplash.com/photo-1520031441872-26546a6b9270?w=800&h=500&fit=crop&auto=format',
+    'Dodge': 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800&h=500&fit=crop&auto=format',
+    'BMW': 'https://images.unsplash.com/photo-1555215695-3004980ad54e?w=800&h=500&fit=crop&auto=format',
+    'Mercedes': 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=800&h=500&fit=crop&auto=format',
+    'Tesla': 'https://images.unsplash.com/photo-1560958089-b8a1929cea89?w=800&h=500&fit=crop&auto=format',
+    'Genesis': 'https://images.unsplash.com/photo-1619767886558-efdc259cde1a?w=800&h=500&fit=crop&auto=format',
+    'Buick': 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=800&h=500&fit=crop&auto=format',
+    'Subaru': 'https://images.unsplash.com/photo-1619682817481-e994891cd1f5?w=800&h=500&fit=crop&auto=format',
+    'GMC': 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800&h=500&fit=crop&auto=format',
+    'Kia': 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=800&h=500&fit=crop&auto=format',
+    'Fiat': 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800&h=500&fit=crop&auto=format',
+    'Ferrari': 'https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=800&h=500&fit=crop&auto=format',
+    'Jeep': 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800&h=500&fit=crop&auto=format',
+    'default': 'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=800&h=500&fit=crop&auto=format',
+  };
+  
+  const imageUrl = car.image_url || fallbackImages[car.make] || fallbackImages['default'];
 
   return (
-    <div style={{
-      background: gradients.card,
-      border: '1px solid #334155',
-      borderRadius: '16px',
-      padding: '20px',
-      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 50,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '16px',
+        background: 'rgba(0,0,0,0.85)',
+        backdropFilter: 'blur(4px)',
+      }}
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div style={{
+        background: colors.carbon800,
+        border: `1px solid ${colors.carbon600}`,
+        borderRadius: '24px',
+        width: '100%',
+        maxWidth: '512px',
+        overflow: 'hidden',
+        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+      }}>
+        <div style={{ position: 'relative', height: '160px', background: colors.carbon, overflow: 'hidden' }}>
+          <img 
+            src={imageUrl} 
+            alt={car.model} 
+            style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.7 }} 
+          />
           <div style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '12px',
-            background: gradients.accent,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 4px 12px rgba(240, 147, 251, 0.4)',
-          }}>
-            <Lightbulb size={20} color="#fff" />
-          </div>
-          <div>
-            <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '16px', fontWeight: 'bold' }}>
-              AI Insights
-            </h3>
-            <div style={{ fontSize: '12px', color: '#94a3b8' }}>
-              Smart recommendations
-            </div>
+            position: 'absolute',
+            inset: 0,
+            background: 'linear-gradient(to top, #18181c, transparent)',
+          }} />
+          <button
+            onClick={onClose}
+            style={{
+              position: 'absolute',
+              top: '16px',
+              right: '16px',
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              background: 'rgba(13, 13, 15, 0.8)',
+              color: colors.surface,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              fontSize: '20px',
+              border: 'none',
+            }}
+          >
+            ×
+          </button>
+          <div style={{ position: 'absolute', bottom: '16px', left: '20px' }}>
+            <p style={{
+              color: colors.sand,
+              fontSize: '11px',
+              fontWeight: '600',
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              margin: 0,
+            }}>
+              {car.make}
+            </p>
+            <h2 style={{
+              color: colors.surface,
+              fontSize: '24px',
+              fontWeight: '800',
+              margin: 0,
+            }}>
+              {car.model}
+            </h2>
           </div>
         </div>
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: '#94a3b8',
-            cursor: 'pointer',
-            padding: '8px',
-            borderRadius: '8px',
-          }}
-        >
-          {isExpanded ? <X size={18} /> : <Sparkles size={18} />}
-        </button>
-      </div>
-
-      {isExpanded && (
-        <>
-          {statusSteps.length > 0 && (
-            <div style={{
-              background: 'rgba(56, 189, 248, 0.1)',
-              borderRadius: '10px',
-              padding: '12px',
-              marginBottom: '16px',
-              border: '1px solid rgba(56, 189, 248, 0.3)',
-            }}>
-              <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 600 }}>
-                Progress
+        <div style={{ padding: '24px' }}>
+          {step === 'done' ? (
+            <div style={{ textAlign: 'center', padding: '32px 0' }}>
+              <div style={{
+                width: '64px',
+                height: '64px',
+                borderRadius: '50%',
+                background: 'rgba(232, 160, 32, 0.15)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 16px',
+              }}>
+                <span style={{ fontSize: '24px' }}>✓</span>
               </div>
-              {statusSteps.map((s, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', fontSize: '13px' }}>
-                  <StatusIcon status={s.status} />
-                  <span style={{ color: s.status === 'COMPLETED' ? '#f8fafc' : '#94a3b8' }}>
-                    {s.step}
-                  </span>
-                </div>
-              ))}
+              <h3 style={{
+                color: colors.surface,
+                fontSize: '24px',
+                fontWeight: '800',
+                margin: '0 0 8px 0',
+              }}>
+                Booking Confirmed!
+              </h3>
+              <p style={{ color: colors.sand, fontSize: '14px', marginBottom: '4px' }}>
+                {car.make} {car.model} · {days} day{days > 1 ? 's' : ''}
+              </p>
+              <p style={{ color: colors.amber, fontSize: '20px', fontWeight: '700', marginBottom: '24px' }}>
+                ${Math.round(total).toLocaleString()} total
+              </p>
+              <p style={{ color: colors.carbon500, fontSize: '12px', marginBottom: '24px' }}>
+                Confirmation sent to your email. Pick up at {pickup}.
+              </p>
+              <button 
+                onClick={onClose} 
+                style={{
+                  width: '100%',
+                  background: colors.amber,
+                  color: colors.carbon,
+                  padding: '12px',
+                  borderRadius: '12px',
+                  fontWeight: '800',
+                  fontSize: '16px',
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                  border: 'none',
+                }}
+              >
+                Done
+              </button>
             </div>
-          )}
-
-          {messages.length > 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {messages.slice(-3).map((m, i) => (
-                <div
-                  key={i}
+          ) : step === 'confirm' ? (
+            <>
+              <h3 style={{
+                color: colors.surface,
+                fontSize: '18px',
+                fontWeight: '800',
+                marginBottom: '16px',
+              }}>
+                Review Booking
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: colors.carbon500, fontSize: '14px' }}>Pick-up</span>
+                  <span style={{ color: colors.surface, fontSize: '14px', fontWeight: '500' }}>{pickup}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: colors.carbon500, fontSize: '14px' }}>Drop-off</span>
+                  <span style={{ color: colors.surface, fontSize: '14px', fontWeight: '500' }}>{dropoff}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: colors.carbon500, fontSize: '14px' }}>Dates</span>
+                  <span style={{ color: colors.surface, fontSize: '14px', fontWeight: '500' }}>{startDate} → {endDate}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: colors.carbon500, fontSize: '14px' }}>Duration</span>
+                  <span style={{ color: colors.surface, fontSize: '14px', fontWeight: '500' }}>{days} day{days > 1 ? 's' : ''}</span>
+                </div>
+                <div style={{ borderTop: `1px solid ${colors.carbon600}`, paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: colors.carbon500, fontSize: '14px' }}>
+                      ${Math.round(basePrice)} × {days} days
+                    </span>
+                    <span style={{ color: colors.surface, fontSize: '14px', fontWeight: '500' }}>${Math.round(subtotal)}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: colors.carbon500, fontSize: '14px' }}>Insurance (12%)</span>
+                    <span style={{ color: colors.surface, fontSize: '14px', fontWeight: '500' }}>${insurance}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px', borderTop: `1px solid ${colors.carbon600}` }}>
+                    <span style={{
+                      color: colors.surface,
+                      fontWeight: '700',
+                      fontSize: '16px',
+                    }}>
+                      Total
+                    </span>
+                    <span style={{
+                      color: colors.amber,
+                      fontWeight: '800',
+                      fontSize: '20px',
+                    }}>
+                      ${Math.round(total).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button 
+                  onClick={() => setStep('details')} 
                   style={{
-                    background: m.sender === 'user' ? gradients.primary : '#1e293b',
-                    padding: '12px 16px',
+                    flex: 1,
+                    border: `1px solid ${colors.carbon600}`,
+                    color: colors.sand,
+                    padding: '12px',
                     borderRadius: '12px',
-                    fontSize: '13px',
-                    lineHeight: 1.5,
-                    color: '#f8fafc',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
+                    fontWeight: '700',
+                    fontSize: '14px',
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    cursor: 'pointer',
+                    background: 'none',
                   }}
                 >
-                  {m.text}
-                </div>
-              ))}
-            </div>
-          )}
-        </>
-      )}
-    </div>
-  );
-}
-
-function CheckoutApp({ app, onConfirm, loading }) {
-  const [cardData, setCardData] = useState({
-    cardholder_name: '',
-    mock_card_number: '',
-    exp_date: '',
-    cvv: '',
-    terms_accepted: false,
-  });
-
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setCardData((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onConfirm(app);
-  };
-
-  return (
-    <div style={{
-      background: gradients.card,
-      border: '1px solid #334155',
-      borderRadius: '16px',
-      padding: '32px',
-      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-    }}>
-      <div style={{
-        background: 'rgba(34, 197, 94, 0.1)',
-        borderRadius: '12px',
-        padding: '20px',
-        marginBottom: '24px',
-        border: '1px solid rgba(34, 197, 94, 0.3)',
-        textAlign: 'center',
-      }}>
-        <ShieldCheck size={48} color="#22c55e" style={{ margin: '0 auto 12px auto' }} />
-        <h3 style={{ margin: '0 0 8px 0', fontSize: '20px', color: '#f8fafc', fontWeight: 'bold' }}>
-          Secure Checkout
-        </h3>
-        <p style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '4px' }}>
-          Merchant: {app.merchant}
-        </p>
-        <p style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '0' }}>
-          {app.car_model}
-        </p>
-      </div>
-
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <div>
-          <label style={labelStyle}>Cardholder Name</label>
-          <input
-            name="cardholder_name"
-            value={cardData.cardholder_name}
-            onChange={handleChange}
-            style={inputStyle}
-            placeholder="John Doe"
-            required
-          />
-        </div>
-        <div>
-          <label style={labelStyle}>Mock Card Number</label>
-          <input
-            name="mock_card_number"
-            value={cardData.mock_card_number}
-            onChange={handleChange}
-            style={inputStyle}
-            placeholder="4111 1111 1111 1111"
-            required
-          />
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-          <div>
-            <label style={labelStyle}>Exp Date</label>
-            <input
-              name="exp_date"
-              value={cardData.exp_date}
-              onChange={handleChange}
-              style={inputStyle}
-              placeholder="MM/YY"
-              required
-            />
-          </div>
-          <div>
-            <label style={labelStyle}>CVV</label>
-            <input
-              name="cvv"
-              value={cardData.cvv}
-              onChange={handleChange}
-              style={inputStyle}
-              placeholder="123"
-              required
-            />
-          </div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <input
-            type="checkbox"
-            name="terms_accepted"
-            checked={cardData.terms_accepted}
-            onChange={handleChange}
-            id="terms"
-            required
-            style={{ width: '16px', height: '16px' }}
-          />
-          <label htmlFor="terms" style={{ fontSize: '12px', color: '#94a3b8', margin: 0 }}>
-            I accept the mock terms and conditions
-          </label>
-        </div>
-        <button
-          type="submit"
-          disabled={loading}
-          style={{
-            background: loading ? '#475569' : gradients.success,
-            color: '#fff',
-            fontWeight: 'bold',
-            border: 'none',
-            padding: '14px',
-            borderRadius: '10px',
-            cursor: loading ? 'not-allowed' : 'pointer',
-            fontSize: '15px',
-            boxShadow: loading ? 'none' : '0 4px 12px rgba(79, 172, 254, 0.4)',
-            transition: 'all 0.3s ease',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-          }}
-        >
-          {loading ? (
-            <>
-              <Clock size={18} className="animate-spin" />
-              Processing...
+                  Back
+                </button>
+                <button 
+                  onClick={() => setStep('done')} 
+                  style={{
+                    flex: 2,
+                    background: colors.amber,
+                    color: colors.carbon,
+                    padding: '12px',
+                    borderRadius: '12px',
+                    fontWeight: '800',
+                    fontSize: '14px',
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    cursor: 'pointer',
+                    border: 'none',
+                  }}
+                >
+                  Confirm & Pay
+                </button>
+              </div>
             </>
           ) : (
             <>
-              <CreditCard size={18} />
-              Confirm Payment
+              <h3 style={{
+                color: colors.surface,
+                fontSize: '18px',
+                fontWeight: '800',
+                marginBottom: '16px',
+              }}>
+                Booking Details
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ color: colors.carbon500, fontSize: '12px', fontWeight: '500', marginBottom: '4px', display: 'block' }}>
+                      Pick-up Location
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="City or Airport"
+                      value={pickup}
+                      onChange={(e) => setPickup(e.target.value)}
+                      style={{
+                        width: '100%',
+                        background: colors.carbon,
+                        border: `1px solid ${colors.carbon600}`,
+                        borderRadius: '12px',
+                        padding: '10px 12px',
+                        color: colors.surface,
+                        fontSize: '14px',
+                        outline: 'none',
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ color: colors.carbon500, fontSize: '12px', fontWeight: '500', marginBottom: '4px', display: 'block' }}>
+                      Drop-off Location
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="City or Airport"
+                      value={dropoff}
+                      onChange={(e) => setDropoff(e.target.value)}
+                      style={{
+                        width: '100%',
+                        background: colors.carbon,
+                        border: `1px solid ${colors.carbon600}`,
+                        borderRadius: '12px',
+                        padding: '10px 12px',
+                        color: colors.surface,
+                        fontSize: '14px',
+                        outline: 'none',
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ color: colors.carbon500, fontSize: '12px', fontWeight: '500', marginBottom: '4px', display: 'block' }}>
+                      Start Date
+                    </label>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      style={{
+                        width: '100%',
+                        background: colors.carbon,
+                        border: `1px solid ${colors.carbon600}`,
+                        borderRadius: '12px',
+                        padding: '10px 12px',
+                        color: colors.surface,
+                        fontSize: '14px',
+                        outline: 'none',
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ color: colors.carbon500, fontSize: '12px', fontWeight: '500', marginBottom: '4px', display: 'block' }}>
+                      End Date
+                    </label>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      style={{
+                        width: '100%',
+                        background: colors.carbon,
+                        border: `1px solid ${colors.carbon600}`,
+                        borderRadius: '12px',
+                        padding: '10px 12px',
+                        color: colors.surface,
+                        fontSize: '14px',
+                        outline: 'none',
+                      }}
+                    />
+                  </div>
+                </div>
+                {startDate && endDate && (
+                  <div style={{
+                    background: colors.carbon,
+                    borderRadius: '12px',
+                    padding: '12px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}>
+                    <span style={{ color: colors.sand, fontSize: '14px' }}>Estimated total ({days} days)</span>
+                    <span style={{
+                      color: colors.amber,
+                      fontWeight: '800',
+                      fontSize: '18px',
+                    }}>
+                      ${Math.round(total).toLocaleString()}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={() => canProceed && setStep('confirm')}
+                disabled={!canProceed}
+                style={{
+                  marginTop: '20px',
+                  width: '100%',
+                  padding: '12px',
+                  borderRadius: '12px',
+                  fontWeight: '800',
+                  fontSize: '14px',
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  cursor: canProceed ? 'pointer' : 'not-allowed',
+                  border: 'none',
+                  background: canProceed ? colors.amber : colors.carbon600,
+                  color: canProceed ? colors.carbon : colors.carbon500,
+                }}
+              >
+                Continue
+              </button>
             </>
           )}
-        </button>
-      </form>
+        </div>
+      </div>
     </div>
   );
 }
 
-export default function App() {
-  const [sessionId] = useState(() => `session_${Math.random().toString(36).slice(2, 11)}`);
-  const [messages, setMessages] = useState([]);
-  const [a2uiComponents, setA2uiComponents] = useState([]);
-  const [statusSteps, setStatusSteps] = useState([]);
+// Chat Panel Component
+function ChatPanel({ open, onClose, sessionId, onPreferencesSubmit }) {
+  const [messages, setMessages] = useState([
+    {
+      role: 'agent',
+      text: "Hi! I'm your AI car matchmaker. Let me help you find the perfect car. Please tell me your preferences:",
+    },
+  ]);
+  const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [currentState, setCurrentState] = useState('INTERVIEW');
-  const [lastCars, setLastCars] = useState([]);
-  const [hasSubmitted, setHasSubmitted] = useState(false);
-  const initializedRef = useRef(false);
+  const [backendOk, setBackendOk] = useState(null);
+  const [showPreferences, setShowPreferences] = useState(true);
+  const [preferences, setPreferences] = useState({
+    intent: 'Rent',
+    category: 'SUV',
+    budget: '2000',
+    target_date: '',
+  });
+  const bottomRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    fetch(`${API_URL}/health`)
+      .then((r) => setBackendOk(r.ok))
+      .catch(() => setBackendOk(false));
+  }, [open]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, loading]);
 
   const sendToAgent = useCallback(async (text, formData = null) => {
     setLoading(true);
@@ -788,215 +635,954 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ session_id: sessionId, message: text, form_data: formData }),
       });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-
-      if (text) {
-        setMessages((prev) => [...prev, { sender: 'user', text }]);
-      }
-      if (data.text) {
-        setMessages((prev) => {
-          const last = prev[prev.length - 1];
-          if (last?.sender === 'agent' && last.text === data.text) return prev;
-          return [...prev, { sender: 'agent', text: data.text }];
-        });
-      }
-      if (data.current_state) {
-        setCurrentState(data.current_state);
-      }
-
-      if (data.a2ui_events?.length) {
-        const isPreferenceSubmit = formData?.intent && formData?.category;
-
-        for (const evt of data.a2ui_events) {
-          if (evt.a2ui_type === 'UPDATE_STATUS') {
-            setStatusSteps(evt.status_steps);
-          }
-          if (evt.a2ui_type === 'RENDER_MCP_APP' || evt.a2ui_type === 'RENDER_CATALOG_GRID') {
-            if (isPreferenceSubmit && evt.a2ui_type === 'RENDER_MCP_APP' && evt.app?.app_id === 'app_car_preference_interview') {
-              continue;
-            }
-            if (evt.a2ui_type === 'RENDER_CATALOG_GRID') {
-              setLastCars(evt.items || []);
-            }
-            setA2uiComponents((prev) => [...prev, evt]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'agent',
+          text: data.text,
+        },
+      ]);
+      
+      // Check if response contains car results
+      if (data.a2ui_events) {
+        const catalogEvent = data.a2ui_events.find(e => e.a2ui_type === 'RENDER_CATALOG_GRID');
+        if (catalogEvent && catalogEvent.items && catalogEvent.items.length > 0) {
+          if (onPreferencesSubmit) {
+            onPreferencesSubmit(catalogEvent.items);
           }
         }
       }
-    } catch (err) {
-      console.error('Chat error:', err);
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        { role: 'agent', text: 'Unable to reach the agent. Make sure the backend is running.' },
+      ]);
     } finally {
       setLoading(false);
     }
-  }, [sessionId]);
+  }, [sessionId, onPreferencesSubmit]);
 
-  useEffect(() => {
-    if (!initializedRef.current) {
-      initializedRef.current = true;
-      sendToAgent('', null);
-    }
-  }, [sendToAgent]);
+  function handleSend() {
+    const text = input.trim();
+    if (!text || loading) return;
+    setMessages((prev) => [...prev, { role: 'user', text }]);
+    setInput('');
+    sendToAgent(text);
+  }
 
-  const handleFormSubmit = (e, data) => {
+  function handlePreferencesSubmit(e) {
     e.preventDefault();
-    setHasSubmitted(true);
-    sendToAgent('Submitted preferences', data);
-  };
+    setShowPreferences(false);
+    setMessages((prev) => [...prev, { role: 'user', text: 'Submitted preferences' }]);
+    sendToAgent('', preferences);
+  }
 
-  const handleCheckoutTrigger = (car) => {
-    sendToAgent(`Initiate booking for ${car.title}`, {
-      checkout_car_id: car.id,
-      car_name: car.title,
-      amount: car.price_value,
-    });
-  };
-
-  const handleCheckoutConfirm = (app) => {
-    sendToAgent('Confirm payment', {
-      checkout_car_id: app.car_id,
-      checkout_confirmed: true,
-    });
-  };
-
-  const renderComponent = (comp, idx) => {
-    if (comp.a2ui_type === 'RENDER_MCP_APP') {
-      const app = comp.app;
-      if (app.app_id === 'app_mock_checkout') {
-        return <CheckoutApp key={idx} app={app} onConfirm={handleCheckoutConfirm} loading={loading} />;
-      }
-    }
-    return null;
-  };
-
-  const stateColors = {
-    INTERVIEW: '#38bdf8',
-    RESEARCH: '#fbbf24',
-    RECOMMENDATION: '#22c55e',
-    CHECKOUT: '#a78bfa',
-  };
+  function handleReset() {
+    fetch(`${API_URL}/api/session/${sessionId}`, { method: 'DELETE' }).catch(() => {});
+    setMessages([
+      {
+        role: 'agent',
+        text: "Session reset! Tell me what kind of car you're looking for.",
+      },
+    ]);
+    setShowPreferences(true);
+  }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#0f172a' }}>
-      {/* Modern Header */}
-      <header style={{
-        padding: '20px 32px',
+    <div
+      style={{
+        position: 'fixed',
+        bottom: '24px',
+        right: '24px',
+        zIndex: 50,
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        background: gradients.dark,
-        borderBottom: '1px solid #334155',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+        flexDirection: 'column',
+        transition: 'all 0.3s ease',
+        width: 360,
+        height: 560,
+        opacity: open ? 1 : 0,
+        transform: open ? 'translateY(0)' : 'translateY(16px)',
+        pointerEvents: open ? 'auto' : 'none',
+      }}
+    >
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        background: colors.carbon800,
+        border: `1px solid ${colors.carbon600}`,
+        borderRadius: '24px',
+        overflow: 'hidden',
+        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.8)',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          padding: '20px',
+          borderBottom: `1px solid ${colors.carbon700}`,
+          background: colors.carbon,
+        }}>
           <div style={{
-            width: '48px',
-            height: '48px',
-            borderRadius: '14px',
-            background: gradients.primary,
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
+            background: 'rgba(232, 160, 32, 0.2)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)',
+            flexShrink: 0,
           }}>
-            <Car size={24} color="#fff" />
+            <span style={{ color: colors.amber, fontSize: '14px' }}>◆</span>
           </div>
-          <div>
-            <h1 style={{ fontSize: '22px', fontWeight: 'bold', margin: 0, color: '#f8fafc' }}>
-              AI Car Matchmaker
-            </h1>
-            <div style={{ fontSize: '13px', color: '#94a3b8' }}>
-              Powered by AI • Real-time Data
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{
+              color: colors.surface,
+              fontSize: '14px',
+              fontWeight: '800',
+              lineHeight: 1,
+              margin: 0,
+            }}>
+              AI Matchmaker
+            </p>
+            <p style={{ color: colors.carbon500, fontSize: '12px', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span
+                style={{
+                  display: 'inline-block',
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  background: backendOk === true ? '#22c55e' : backendOk === false ? '#ef4444' : colors.carbon500,
+                }}
+              />
+              {backendOk === true ? 'Connected' : backendOk === false ? 'Backend offline' : 'Connecting…'}
+            </p>
+          </div>
+          <button
+            onClick={handleReset}
+            title="Reset session"
+            style={{
+              background: 'none',
+              border: 'none',
+              color: colors.carbon500,
+              cursor: 'pointer',
+              padding: '8px',
+              marginRight: '4px',
+              fontSize: '14px',
+            }}
+          >
+            ↺
+          </button>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: colors.carbon500,
+              cursor: 'pointer',
+              fontSize: '18px',
+              lineHeight: 1,
+            }}
+          >
+            ×
+          </button>
+        </div>
+
+        {/* Preferences Form */}
+        {showPreferences && (
+          <form onSubmit={handlePreferencesSubmit} style={{ padding: '16px', borderBottom: `1px solid ${colors.carbon700}` }}>
+            <div style={{ marginBottom: '12px' }}>
+              <label style={{ color: colors.carbon500, fontSize: '12px', marginBottom: '4px', display: 'block' }}>
+                Intent
+              </label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                {['Rent', 'Buy'].map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => setPreferences(prev => ({ ...prev, intent: option }))}
+                    style={{
+                      flex: 1,
+                      padding: '8px',
+                      borderRadius: '8px',
+                      border: preferences.intent === option ? `2px solid ${colors.amber}` : `1px solid ${colors.carbon600}`,
+                      background: preferences.intent === option ? `rgba(232, 160, 32, 0.2)` : 'transparent',
+                      color: preferences.intent === option ? colors.amber : colors.sand,
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span style={{
-            fontSize: '12px',
-            background: stateColors[currentState] || '#64748b',
-            color: '#0f172a',
-            padding: '6px 16px',
-            borderRadius: '20px',
-            fontWeight: 700,
-            boxShadow: `0 2px 8px ${stateColors[currentState]}40`,
-          }}>
-            {currentState}
-          </span>
-        </div>
-      </header>
+            <div style={{ marginBottom: '12px' }}>
+              <label style={{ color: colors.carbon500, fontSize: '12px', marginBottom: '4px', display: 'block' }}>
+                Category
+              </label>
+              <select
+                value={preferences.category}
+                onChange={(e) => setPreferences(prev => ({ ...prev, category: e.target.value }))}
+                style={{
+                  width: '100%',
+                  background: colors.carbon,
+                  border: `1px solid ${colors.carbon600}`,
+                  borderRadius: '8px',
+                  padding: '8px 12px',
+                  color: colors.surface,
+                  fontSize: '14px',
+                  outline: 'none',
+                }}
+              >
+                {CATEGORIES.filter(c => c !== 'All').map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+            <div style={{ marginBottom: '12px' }}>
+              <label style={{ color: colors.carbon500, fontSize: '12px', marginBottom: '4px', display: 'block' }}>
+                Budget ({preferences.intent === 'Rent' ? '$/day' : '$ total'})
+              </label>
+              <input
+                type="number"
+                value={preferences.budget}
+                onChange={(e) => setPreferences(prev => ({ ...prev, budget: e.target.value }))}
+                style={{
+                  width: '100%',
+                  background: colors.carbon,
+                  border: `1px solid ${colors.carbon600}`,
+                  borderRadius: '8px',
+                  padding: '8px 12px',
+                  color: colors.surface,
+                  fontSize: '14px',
+                  outline: 'none',
+                }}
+              />
+            </div>
+            <div style={{ marginBottom: '12px' }}>
+              <label style={{ color: colors.carbon500, fontSize: '12px', marginBottom: '4px', display: 'block' }}>
+                Target Date
+              </label>
+              <input
+                type="date"
+                value={preferences.target_date}
+                onChange={(e) => setPreferences(prev => ({ ...prev, target_date: e.target.value }))}
+                style={{
+                  width: '100%',
+                  background: colors.carbon,
+                  border: `1px solid ${colors.carbon600}`,
+                  borderRadius: '8px',
+                  padding: '8px 12px',
+                  color: colors.surface,
+                  fontSize: '14px',
+                  outline: 'none',
+                }}
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                width: '100%',
+                background: colors.amber,
+                color: colors.carbon,
+                padding: '10px',
+                borderRadius: '8px',
+                fontWeight: '700',
+                fontSize: '14px',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                border: 'none',
+                opacity: loading ? 0.5 : 1,
+              }}
+            >
+              {loading ? 'Searching...' : 'Find Cars'}
+            </button>
+          </form>
+        )}
 
-      {/* Modern Split Layout */}
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        {/* Left Panel - Preferences */}
-        <div style={{
-          width: '380px',
-          padding: '24px',
-          overflowY: 'auto',
-          borderRight: '1px solid #334155',
-          background: 'rgba(15, 23, 42, 0.5)',
-        }}>
-          {a2uiComponents.some(c => c.a2ui_type === 'RENDER_MCP_APP' && c.app?.app_id === 'app_car_preference_interview') ? (
-            <PreferencePanel
-              app={a2uiComponents.find(c => c.a2ui_type === 'RENDER_MCP_APP' && c.app?.app_id === 'app_car_preference_interview')?.app || { fields: {
-                intent: { label: 'Intent', options: ['Rent', 'Buy'] },
-                category: { label: 'Category', options: CATEGORIES },
-                budget: {
-                  label_rent: 'Max Daily Rental Rate ($/day)',
-                  label_buy: 'Max Purchase Budget ($ total)',
-                  default_rent: 200,
-                  default_buy: 60000,
-                  min_rent: 50,
-                  min_buy: 15000
-                },
-                target_date: { label: 'Target Purchase / Rental Date' }
-              }}}
-              onSubmit={handleFormSubmit}
-              loading={loading}
-            />
-          ) : (
-            <PreferencePanel
-              app={{ fields: {
-                intent: { label: 'Intent', options: ['Rent', 'Buy'] },
-                category: { label: 'Category', options: CATEGORIES },
-                budget: {
-                  label_rent: 'Max Daily Rental Rate ($/day)',
-                  label_buy: 'Max Purchase Budget ($ total)',
-                  default_rent: 200,
-                  default_buy: 60000,
-                  min_rent: 50,
-                  min_buy: 15000
-                },
-                target_date: { label: 'Target Purchase / Rental Date' }
-              }}}
-              onSubmit={handleFormSubmit}
-              loading={loading}
-            />
-          )}
-
-          {/* AI Insights */}
-          <div style={{ marginTop: '24px' }}>
-            <AIInsightsPanel messages={messages} statusSteps={statusSteps} />
-          </div>
-        </div>
-
-        {/* Main Content - Live Results */}
         <div style={{
           flex: 1,
-          padding: '32px',
           overflowY: 'auto',
-          background: 'linear-gradient(180deg, #0f172a 0%, #1e293b 100%)',
+          padding: '16px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '12px',
         }}>
-          {/* Checkout Component */}
-          {a2uiComponents.some(c => c.a2ui_type === 'RENDER_MCP_APP' && c.app?.app_id === 'app_mock_checkout') && (
-            <div style={{ maxWidth: '500px', margin: '0 auto' }}>
-              {a2uiComponents
-                .filter(c => c.a2ui_type === 'RENDER_MCP_APP' && c.app?.app_id === 'app_mock_checkout')
-                .map((comp, idx) => renderComponent(comp, idx))}
+          {messages.map((msg, i) => (
+            <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
+              <div
+                style={{
+                  maxWidth: '85%',
+                  background: msg.role === 'user' ? colors.amber : 'transparent',
+                  color: msg.role === 'user' ? colors.carbon : colors.surface,
+                  borderRadius: '16px',
+                  borderBottomRightRadius: msg.role === 'user' ? '4px' : '16px',
+                  padding: '16px',
+                }}
+              >
+                <p style={{ fontSize: '14px', lineHeight: 1.5, margin: 0 }}>{msg.text}</p>
+              </div>
+            </div>
+          ))}
+          {loading && (
+            <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+              <div style={{ display: 'flex', gap: '4px', padding: '4px' }}>
+                {[0, 1, 2].map((i) => (
+                  <span
+                    key={i}
+                    style={{
+                      width: '6px',
+                      height: '6px',
+                      borderRadius: '50%',
+                      background: 'rgba(232, 160, 32, 0.6)',
+                      animation: 'bounce 1s infinite',
+                      animationDelay: `${i * 150}ms`,
+                    }}
+                  />
+                ))}
+              </div>
             </div>
           )}
+          <div ref={bottomRef} />
+        </div>
 
-          {/* Live Results */}
-          <LiveResultsPanel cars={lastCars} onCheckout={handleCheckoutTrigger} statusSteps={statusSteps} hasSubmitted={hasSubmitted} />
+        <div style={{
+          padding: '12px 16px',
+          borderTop: `1px solid ${colors.carbon700}`,
+          display: 'flex',
+          gap: '8px',
+        }}>
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+            placeholder="Describe your ideal car…"
+            disabled={loading || backendOk === false}
+            style={{
+              flex: 1,
+              background: colors.carbon,
+              border: `1px solid ${colors.carbon600}`,
+              borderRadius: '12px',
+              padding: '10px 12px',
+              color: colors.surface,
+              fontSize: '14px',
+              outline: 'none',
+              opacity: loading || backendOk === false ? 0.4 : 1,
+            }}
+          />
+          <button
+            onClick={handleSend}
+            disabled={!input.trim() || loading || backendOk === false}
+            style={{
+              background: colors.amber,
+              color: colors.carbon,
+              padding: '10px 16px',
+              borderRadius: '12px',
+              fontWeight: '800',
+              fontSize: '14px',
+              cursor: !input.trim() || loading || backendOk === false ? 'not-allowed' : 'pointer',
+              border: 'none',
+              opacity: !input.trim() || loading || backendOk === false ? 0.4 : 1,
+            }}
+          >
+            →
+          </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// Main App Component
+export default function App() {
+  const [activeCategory, setActiveCategory] = useState('All');
+  const [maxPrice, setMaxPrice] = useState(2000);
+  const [sortBy, setSortBy] = useState('rating');
+  const [selectedCar, setSelectedCar] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [chatOpen, setChatOpen] = useState(false);
+  const [sessionId] = useState(genSessionId);
+  const [cars, setCars] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [intent, setIntent] = useState('Rent'); // Rent or Buy
+  const [targetDate, setTargetDate] = useState(new Date().toISOString().split('T')[0]); // Default to today
+
+  // Update maxPrice when intent changes
+  useEffect(() => {
+    if (intent === 'Rent') {
+      setMaxPrice(2000);
+    } else {
+      setMaxPrice(100000);
+    }
+  }, [intent]);
+
+  // Load cars from backend
+  useEffect(() => {
+    loadCars();
+  }, [activeCategory, maxPrice, intent]);
+
+  const loadCars = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          session_id: sessionId, 
+          message: '', 
+          form_data: { 
+            intent: intent,
+            category: activeCategory === 'All' ? 'SUV' : activeCategory,
+            budget: maxPrice.toString(),
+            target_date: targetDate || new Date().toISOString().split('T')[0]
+          } 
+        }),
+      });
+      const data = await res.json();
+      
+      console.log('Backend response:', data);
+      
+      // Extract cars from the response
+      if (data.a2ui_events) {
+        const catalogEvent = data.a2ui_events.find(e => e.a2ui_type === 'RENDER_CATALOG_GRID');
+        if (catalogEvent && catalogEvent.items) {
+          console.log('Cars from backend:', catalogEvent.items);
+          setCars(catalogEvent.items);
+        } else {
+          console.log('No RENDER_CATALOG_GRID event found');
+        }
+      } else {
+        console.log('No a2ui_events in response');
+      }
+    } catch (err) {
+      console.error('Failed to load cars:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filtered = cars.filter((c) => {
+    const matchCat = activeCategory === 'All' || c.category === activeCategory;
+    
+    // For Rent: check daily_rental_rate, or estimate from purchase price
+    let matchPrice = false;
+    if (intent === 'Rent') {
+      if (c.daily_rental_rate && c.daily_rental_rate > 0) {
+        matchPrice = c.daily_rental_rate <= maxPrice;
+      } else if (c.purchase_price) {
+        // Estimate daily rental as ~1% of purchase price
+        const estimatedDaily = c.purchase_price * 0.01;
+        matchPrice = estimatedDaily <= maxPrice;
+      }
+    } else {
+      // For Buy: check purchase_price
+      matchPrice = c.purchase_price <= maxPrice;
+    }
+    
+    const matchSearch =
+      searchQuery === '' ||
+      c.model.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.make.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    console.log(`Filtering car: ${c.make} ${c.model}, matchCat: ${matchCat}, matchPrice: ${matchPrice}, matchSearch: ${matchSearch}`);
+    
+    return matchCat && matchPrice && matchSearch;
+  }).sort((a, b) => (sortBy === 'price' 
+    ? (intent === 'Rent' ? (a.daily_rental_rate || a.purchase_price * 0.01) - (b.daily_rental_rate || b.purchase_price * 0.01) : a.purchase_price - b.purchase_price) 
+    : b.rating - a.rating));
+  
+  console.log(`Total cars: ${cars.length}, Filtered cars: ${filtered.length}`);
+
+  return (
+    <div style={{ minHeight: '100vh', background: colors.carbon }}>
+      {/* Nav */}
+      <nav style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 40,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '0 32px',
+        height: '64px',
+        borderBottom: `1px solid ${colors.carbon800}`,
+        background: 'rgba(13, 13, 15, 0.9)',
+        backdropFilter: 'blur(12px)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ color: colors.amber, fontSize: '20px', lineHeight: 1 }}>◆</span>
+          <span style={{
+            color: colors.surface,
+            fontSize: '20px',
+            fontWeight: '800',
+            letterSpacing: '0.05em',
+          }}>
+            MATCH MY DRIVE
+          </span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
+          <a href="#" style={{ color: colors.sand, fontSize: '14px', fontWeight: '500', textDecoration: 'none' }}>
+            Fleet
+          </a>
+          <a href="#" style={{ color: colors.sand, fontSize: '14px', fontWeight: '500', textDecoration: 'none' }}>
+            Locations
+          </a>
+          <a href="#" style={{ color: colors.sand, fontSize: '14px', fontWeight: '500', textDecoration: 'none' }}>
+            About
+          </a>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button
+            onClick={() => setChatOpen((o) => !o)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 16px',
+              borderRadius: '20px',
+              fontSize: '12px',
+              fontWeight: '600',
+              border: chatOpen ? `1px solid ${colors.amber}` : `1px solid ${colors.carbon600}`,
+              background: chatOpen ? colors.amber : 'transparent',
+              color: chatOpen ? colors.carbon : colors.sand,
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+            }}
+          >
+            <span>◆</span>
+            <span style={{
+              fontWeight: '700',
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+            }}>
+              AI Matchmaker
+            </span>
+          </button>
+        </div>
+      </nav>
+
+      {/* Hero */}
+      <section style={{
+        position: 'relative',
+        paddingTop: '64px',
+        overflow: 'hidden',
+        minHeight: '520px',
+      }}>
+        <div style={{ position: 'absolute', inset: 0 }}>
+          <img
+            src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=1600&h=900&fit=crop&auto=format"
+            alt="Sports car on road"
+            style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.4 }}
+          />
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'linear-gradient(to right, #0d0d0f, rgba(13, 13, 15, 0.8), transparent)',
+          }} />
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'linear-gradient(to top, #0d0d0f, transparent)',
+          }} />
+        </div>
+        <div style={{
+          position: 'relative',
+          zIndex: 10,
+          padding: '0 32px',
+          paddingTop: '80px',
+          paddingBottom: '112px',
+          maxWidth: '1280px',
+          margin: '0 auto',
+        }}>
+          <p style={{
+            color: colors.amber,
+            fontSize: '14px',
+            fontWeight: '700',
+            letterSpacing: '0.2em',
+            textTransform: 'uppercase',
+            marginBottom: '16px',
+          }}>
+            AI-Powered • Real Data • Instant Results
+          </p>
+          <h1 style={{
+            color: colors.surface,
+            fontWeight: 900,
+            lineHeight: 1,
+            marginBottom: '24px',
+            fontSize: 'clamp(48px, 8vw, 96px)',
+          }}>
+            Find Your<br />
+            <em style={{ fontStyle: 'normal', color: colors.amber }}>Perfect</em> Drive.
+          </h1>
+          <p style={{
+            color: colors.sand,
+            fontSize: '18px',
+            maxWidth: '512px',
+            lineHeight: 1.6,
+            marginBottom: '40px',
+          }}>
+            AI-powered car matching with real-time market data from Auto.dev. Tell us what you need, we'll find the perfect vehicle.
+          </p>
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+            <input
+              type="text"
+              placeholder="Search by model or brand…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                background: colors.carbon800,
+                border: `1px solid ${colors.carbon600}`,
+                borderRadius: '16px',
+                padding: '14px 20px',
+                color: colors.surface,
+                fontSize: '14px',
+                width: '288px',
+                outline: 'none',
+              }}
+            />
+            <button
+              onClick={() => setChatOpen(true)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                background: colors.carbon800,
+                border: `1px solid ${colors.carbon600}`,
+                color: colors.sand,
+                padding: '14px 24px',
+                borderRadius: '16px',
+                fontWeight: '700',
+                fontSize: '14px',
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+              }}
+            >
+              <span style={{ color: colors.amber }}>◆</span> Ask AI
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats strip */}
+      <div style={{ background: colors.carbon800, borderTop: `1px solid ${colors.carbon700}`, borderBottom: `1px solid ${colors.carbon700}` }}>
+        <div style={{
+          maxWidth: '1280px',
+          margin: '0 auto',
+          padding: '24px 32px',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, 1fr)',
+          gap: '24px',
+        }}>
+          {[
+            { value: 'Real API', label: 'Data Source' },
+            { value: 'Auto.dev', label: 'Powered By' },
+            { value: 'AI Match', label: 'Technology' },
+            { value: 'Instant', label: 'Results' },
+          ].map((s) => (
+            <div key={s.label} style={{ textAlign: 'center' }}>
+              <p style={{
+                color: colors.amber,
+                fontSize: '48px',
+                fontWeight: 900,
+                margin: 0,
+              }}>
+                {s.value}
+              </p>
+              <p style={{
+                color: colors.carbon500,
+                fontSize: '12px',
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                marginTop: '2px',
+              }}>
+                {s.label}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Fleet section */}
+      <section style={{ maxWidth: '1280px', margin: '0 auto', padding: '56px 32px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '40px' }}>
+          {/* Intent Selector */}
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            {['Rent', 'Buy'].map((option) => (
+              <button
+                key={option}
+                onClick={() => setIntent(option)}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '20px',
+                  fontSize: '14px',
+                  fontWeight: '700',
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                  border: intent === option ? `2px solid ${colors.amber}` : `1px solid ${colors.carbon600}`,
+                  background: intent === option ? `rgba(232, 160, 32, 0.2)` : 'transparent',
+                  color: intent === option ? colors.amber : colors.sand,
+                }}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+
+          {/* Category Filter */}
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '20px',
+                  fontSize: '14px',
+                  fontWeight: '700',
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                  border: activeCategory === cat ? 'none' : `1px solid ${colors.carbon600}`,
+                  background: activeCategory === cat ? colors.amber : 'transparent',
+                  color: activeCategory === cat ? colors.carbon : colors.sand,
+                }}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+            {/* Date Input */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <input
+                type="date"
+                value={targetDate}
+                onChange={(e) => setTargetDate(e.target.value)}
+                style={{
+                  background: colors.carbon,
+                  border: `1px solid ${colors.carbon600}`,
+                  borderRadius: '12px',
+                  padding: '8px 12px',
+                  color: colors.surface,
+                  fontSize: '14px',
+                  outline: 'none',
+                }}
+              />
+            </div>
+
+            {/* Price Slider */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ color: colors.carbon500, fontSize: '12px', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                Max
+              </span>
+              <span style={{
+                color: colors.amber,
+                fontSize: '14px',
+                fontWeight: '700',
+                width: '80px',
+              }}>
+                ${maxPrice.toLocaleString()}
+              </span>
+              <input 
+                type="range" 
+                min={intent === 'Rent' ? 100 : 15000} 
+                max={intent === 'Rent' ? 2000 : 100000} 
+                step={intent === 'Rent' ? 50 : 1000} 
+                value={maxPrice} 
+                onChange={(e) => setMaxPrice(Number(e.target.value))} 
+                style={{ accentColor: colors.amber, width: '112px' }} 
+              />
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {(['rating', 'price']).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setSortBy(s)}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '20px',
+                    fontSize: '12px',
+                    fontWeight: '700',
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    cursor: 'pointer',
+                    background: sortBy === s ? colors.carbon600 : 'transparent',
+                    color: sortBy === s ? colors.surface : colors.carbon500,
+                    border: 'none',
+                  }}
+                >
+                  {s === 'rating' ? '★ Top Rated' : '$ Price'}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '24px' }}>
+          <h2 style={{
+            color: colors.surface,
+            fontSize: '48px',
+            fontWeight: 900,
+            letterSpacing: '0.05em',
+            textTransform: 'uppercase',
+            margin: 0,
+          }}>
+            Available Fleet
+          </h2>
+          <span style={{ color: colors.carbon500, fontSize: '14px' }}>{filtered.length} vehicles</span>
+        </div>
+
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '80px 32px', color: colors.carbon500 }}>
+            <p style={{
+              fontSize: '32px',
+              fontWeight: '800',
+              marginBottom: '8px',
+            }}>
+              Loading vehicles...
+            </p>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '80px 32px', color: colors.carbon500 }}>
+            <p style={{
+              fontSize: '32px',
+              fontWeight: '800',
+              marginBottom: '8px',
+            }}>
+              No Matches
+            </p>
+            <p style={{ fontSize: '14px' }}>
+              Try adjusting your filters or <button onClick={() => setChatOpen(true)} style={{ color: colors.amber, textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}>ask the AI</button>
+            </p>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px' }}>
+            {filtered.map((car) => (
+              <CarCard key={car.id} car={car} onSelect={setSelectedCar} intent={intent} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* CTA band */}
+      <section style={{ background: colors.amber, padding: '56px 32px', textAlign: 'center' }}>
+        <p style={{
+          color: 'rgba(13, 13, 15, 0.6)',
+          fontSize: '14px',
+          fontWeight: '700',
+          letterSpacing: '0.2em',
+          textTransform: 'uppercase',
+          marginBottom: '12px',
+        }}>
+          AI-Powered Experience
+        </p>
+        <h2 style={{
+          color: colors.carbon,
+          fontWeight: 900,
+          lineHeight: 1,
+          marginBottom: '16px',
+          fontSize: 'clamp(32px, 5vw, 56px)',
+        }}>
+          Find Your Perfect Match Today.
+        </h2>
+        <p style={{
+          color: 'rgba(13, 13, 15, 0.7)',
+          maxWidth: '512px',
+          margin: '0 auto 32px',
+        }}>
+          Real-time data from Auto.dev. AI-powered recommendations. Instant results.
+        </p>
+        <button 
+          onClick={() => setChatOpen(true)}
+          style={{
+            background: colors.carbon,
+            color: colors.amber,
+            padding: '16px 40px',
+            borderRadius: '16px',
+            fontWeight: '800',
+            fontSize: '16px',
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            cursor: 'pointer',
+            border: 'none',
+          }}
+        >
+          Start Matching
+        </button>
+      </section>
+
+      {/* Footer */}
+      <footer style={{ background: colors.carbon, borderTop: `1px solid ${colors.carbon800}`, padding: '40px 32px' }}>
+        <div style={{
+          maxWidth: '1280px',
+          margin: '0 auto',
+          display: 'flex',
+          flexDirection: 'row',
+          gap: '24px',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ color: colors.amber, fontSize: '20px' }}>◆</span>
+            <span style={{
+              color: colors.surface,
+              fontSize: '18px',
+              fontWeight: '800',
+              letterSpacing: '0.05em',
+            }}>
+              MATCH MY DRIVE
+            </span>
+          </div>
+          <div style={{ display: 'flex', gap: '24px' }}>
+            <a href="#" style={{ color: colors.carbon500, fontSize: '14px', textDecoration: 'none' }}>Privacy</a>
+            <a href="#" style={{ color: colors.carbon500, fontSize: '14px', textDecoration: 'none' }}>Terms</a>
+            <a href="#" style={{ color: colors.carbon500, fontSize: '14px', textDecoration: 'none' }}>Support</a>
+          </div>
+          <p style={{ color: colors.carbon500, fontSize: '12px', margin: 0 }}>© 2026 Match My Drive. All rights reserved.</p>
+        </div>
+      </footer>
+
+      {/* Floating AI chat button (mobile) */}
+      {!chatOpen && (
+        <button
+          onClick={() => setChatOpen(true)}
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            right: '24px',
+            zIndex: 40,
+            width: '56px',
+            height: '56px',
+            borderRadius: '50%',
+            background: colors.amber,
+            color: colors.carbon,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 8px 24px rgba(232, 160, 32, 0.3)',
+            cursor: 'pointer',
+            border: 'none',
+            fontSize: '20px',
+          }}
+        >
+          <span>◆</span>
+        </button>
+      )}
+
+      {/* Chat panel */}
+      <ChatPanel open={chatOpen} onClose={() => setChatOpen(false)} sessionId={sessionId} onPreferencesSubmit={(carsFromChat) => setCars(carsFromChat)} />
+
+      {/* Booking modal */}
+      {selectedCar && <BookingModal car={selectedCar} onClose={() => setSelectedCar(null)} intent={intent} />}
     </div>
   );
 }

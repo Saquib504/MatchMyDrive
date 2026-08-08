@@ -164,6 +164,13 @@ class MultistepCarAgent:
                 ),
                 "image_url": car.get("image_url", ""),
                 "source": car.get("source", "mock"),
+                # Add frontend-specific fields
+                "make": car.get("make", "Unknown"),
+                "model": car.get("model", "Unknown"),
+                "purchase_price": car.get("purchase_price", 0),
+                "daily_rental_rate": car.get("daily_rental_rate", 0),
+                "ev_range": car.get("ev_range", 0),
+                "seating_capacity": car.get("seating_capacity", 5),
             })
 
         tradeoff = self._build_tradeoff_matrix(catalog_items, is_rental)
