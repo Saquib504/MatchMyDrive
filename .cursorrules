@@ -1,0 +1,32 @@
+# AI Car Matchmaker - Cursor Development Guidelines
+
+## Project Architecture
+- Framework: Full-Stack Monorepo
+- Backend: Python 3.11+ / FastAPI / Uvicorn
+- DB: SQLite (Persistent 120+ Car Inventory Dataset)
+- AI Agent: Claude Agent SDK / LangChain DeepAgents
+- Frontend: React 18 / Vite / Lucide-React
+- Protocols:
+  - A2UI v0.9.1 (Google Agent-to-UI declarative JSON streaming protocol)
+  - MCP Apps (Model Context Protocol embedded UI applications)
+- Observability: OpenTelemetry + Langfuse SDK
+
+## Critical Protocol & Schema Rules
+
+1. A2UI Protocol Rules:
+   - Always emit flat JSON stream payloads matching A2UI v0.9.1 spec.
+   - Message Types: `createSurface`, `updateComponents`, `updateDataModel`.
+   - Never output static HTML or raw inline JSX inside agent reasoning streams.
+   - Separate UI layout structure from data updates.
+
+2. MCP Apps Rules:
+   - Interactive forms (preference interview) and payment gateways (mock checkout) MUST be isolated as MCP Apps.
+   - Mock checkout must NOT call external payment networks (e.g., Stripe, BMW APIs) and must run as a safe, sandboxed frame inside chat.
+
+3. Agent State Machine:
+   - Maintain explicit state across turns: `INTERVIEW` -> `RESEARCH` -> `RECOMMENDATION` -> `CHECKOUT`.
+   - Interview must capture: `intent` (Buy vs Rent), `category`, `max_budget`, `target_date`.
+   - Include a "Trade-Off Matrix" in recommendations comparing value vs top rating.
+
+4. Mock Marketplace Dataset:
+   - Database must pre-seed 120+ cars across 10 categories (SUV, Sedan, EV, Luxury, Sports, Hybrid, Compact, Truck, Minivan, Convertible) with >=10 brands per category.
