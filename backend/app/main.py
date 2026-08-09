@@ -6,6 +6,7 @@ from typing import Optional
 from app.agent import MultistepCarAgent
 from app.database import init_db, update_cars_with_vins
 from app.hybrid_data_service import hybrid_data_service
+from app.car_image_service import car_image_service
 
 app = FastAPI(
     title="AI Car Matchmaker Agent Backend",
@@ -68,6 +69,11 @@ async def get_cars(
         is_rental=is_rental,
         limit=limit
     )
+    
+    # Enhance cars with images from Auto.dev API
+    for car in cars:
+        await car_image_service.enhance_car_with_api_image(car)
+    
     return {"cars": cars}
 
 
