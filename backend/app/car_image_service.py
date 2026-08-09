@@ -153,24 +153,23 @@ class CarImageService:
     
     async def enhance_car_with_api_image(self, car: dict[str, Any]) -> dict[str, Any]:
         """Enhance car data with real images from Auto.dev API using VIN"""
-        
         if not self.api_client.enabled:
-            logger.info("Auto.dev API not enabled, using local image matching")
-            self.enhance_car_image(car)
+            logger.info("Auto.dev API not enabled, skipping photo enhancement")
             return car
         
         # If car already has a good image from API listing, use it
-        if car.get("image_url") and car.get("image_source") == "api":
+        if car.get("image_url") and car.get("source") == "auto_dev":
             logger.info(f"Car already has API image: {car.get('image_url')}")
+            car["image_source"] = "api"
             return car
         
         vin = car.get("vin", "")
         if not vin:
-            logger.info(f"No VIN for car {car.get('id')}, using local image matching")
-            self.enhance_car_image(car)
+            logger.info(f"No VIN for car {car.get('id')}, skipping photo enhancement")
             return car
         
         try:
+            logger.info(f"Attempting to fetch photos for VIN: {vin}")
             # Try to get photos from Auto.dev API using VIN
             photos = await self.api_client.get_vehicle_photos(vin)
             if photos and len(photos) > 0:
@@ -180,13 +179,12 @@ class CarImageService:
                 logger.info(f"✅ Successfully enhanced car {vin} with {len(photos)} API photos")
                 return car
             else:
-                # Use local image matching as fallback (silent, no warning)
-                logger.debug(f"No API photos for VIN {vin}, using local image matching")
-                self.enhance_car_image(car)
+                logger.warning(f"⚠️ No photos returned from API for VIN {vin}")
         except Exception as e:
-            logger.debug(f"Failed to get API photos for VIN {vin}: {e}, using local image matching")
-            self.enhance_car_image(car)
+            logger.error(f"❌ Failed to get API photos for VIN {vin}: {e}")
         
+        # Keep the existing image if API fails
+        logger.info(f"Keeping existing image for VIN {vin}")
         return car
     
     def enhance_car_image(self, car: dict[str, Any]) -> dict[str, Any]:
@@ -196,10 +194,12 @@ class CarImageService:
         category = car.get("category", "Sedan")
         year = car.get("year", 2024)
         
-        # Always get a better image based on make/model/category
-        better_image = self.get_image_for_car(make, model, category, year)
-        car["image_url"] = better_image
-        car["image_source"] = "matched"
+        # Only replace if current image is generic or doesn't match
+        current_image = car.get("image_url", "")
+        if not current_image or "unsplash.com" in current_image:
+            better_image = self.get_image_for_car(make, model, category, year)
+            car["image_url"] = better_image
+            car["image_source"] = "matched"
         
         return car
 

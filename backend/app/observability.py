@@ -43,3 +43,4 @@ def trace_agent_step(name: str, metadata: dict[str, Any] | None = None) -> None:
             pass
 
     # OpenTelemetry-style console log for local debugging
+    pass

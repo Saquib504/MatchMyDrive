@@ -68,7 +68,9 @@ def update_cars_with_vins() -> None:
             cursor.execute("UPDATE cars SET vin = ? WHERE id = ?", (vin, car_id))
         
         conn.commit()
+        pass
     else:
+        pass
     
     conn.close()
 
@@ -155,8 +157,7 @@ def query_cars(
     max_budget: float | None = None,
     is_rental: bool = True,
     min_seats: int = 1,
-    limit: int = 50,  # Increased from 6 to show more results
-    preferred_brand: str | None = None,
+    limit: int = 6,
 ) -> list[dict[str, Any]]:
     conn = _get_connection()
     cursor = conn.cursor()
@@ -172,11 +173,6 @@ def query_cars(
     if category and category != "All":
         query += " AND category = ?"
         params.append(category)
-    # If category is None or "All", don't filter by category - get all categories
-
-    if preferred_brand:
-        query += " AND make = ?"
-        params.append(preferred_brand)
 
     if max_budget is not None:
         if is_rental:
@@ -333,3 +329,4 @@ def upsert_car_from_api(car_data: dict[str, Any]) -> int:
 if __name__ == "__main__":
     init_db()
     cars = query_cars()
+    pass

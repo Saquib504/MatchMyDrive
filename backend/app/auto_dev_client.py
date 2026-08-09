@@ -27,6 +27,7 @@ class AutoDevClient:
         limit: int = 10
     ) -> list[dict[str, Any]]:
         """Search vehicle listings with filters"""
+        pass
         
         if not self.enabled:
             logger.warning("Auto.dev API not enabled")
@@ -46,6 +47,7 @@ class AutoDevClient:
         if max_price:
             params["retailListing.price"] = f"0-{max_price}"
         
+        pass
         
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
@@ -57,25 +59,33 @@ class AutoDevClient:
                         "Content-Type": "application/json"
                     }
                 )
+                pass
                 response.raise_for_status()
                 data = response.json()
+                pass
                 
                 # Handle response structure according to docs
                 if isinstance(data, dict):
                     if "data" in data:
                         listings = data["data"]
+                        pass
                         return listings
                     else:
+                        pass
                         return []
                 elif isinstance(data, list):
+                    pass
                     return data
                 else:
+                    pass
                     return []
                     
         except httpx.HTTPError as e:
+            pass
             logger.error(f"Auto.dev API error: {e}")
             return []
         except Exception as e:
+            pass
             logger.error(f"Auto.dev API error: {e}")
             return []
     
