@@ -1382,7 +1382,7 @@ export default function App() {
       const res = await fetch(`${API_URL}/api/cars?${params.toString()}`);
       const data = await res.json();
       
-      setCars(data.items || []);
+      setCars(data.cars || []);
     } catch (err) {
       console.error('Failed to load cars:', err);
     } finally {
