@@ -1,4 +1,9 @@
-# AI Car Matchmaker
+# MatchMyDrive — AI Car Matchmaker
+
+[![Live Webpage](https://img.shields.io/badge/🚀_Live_App-Open_Webpage-22c55e?style=for-the-badge)](https://match-my-drive.vercel.app)
+[![Backend API](https://img.shields.io/badge/Backend-Live-0284c7?style=for-the-badge)](https://matchmydrive-backend.onrender.com/health)
+[![Docker Ready](https://img.shields.io/badge/Docker-Ready-0284c7?style=for-the-badge&logo=docker&logoColor=white)](#quick-start-docker-compose)
+[![Open in Codespaces](https://img.shields.io/badge/Codespaces-1--Click_Demo-8b5cf6?style=for-the-badge&logo=github)](https://codespaces.new/Saquib504/MatchMyDrive)
 
 **Amulate Summer Hackathon 2026** — A multistep AI agent that helps users find the right car to rent or buy, with protocol-based generative UI (A2UI) and embedded MCP Apps for forms and mock checkout.
 
