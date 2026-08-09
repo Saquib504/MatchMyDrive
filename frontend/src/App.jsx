@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL || 'https://matchmydrive-backend.onrender.com';
 
 const CATEGORIES = ['All', 'SUV', 'Sedan', 'Sports', 'EV', 'Luxury', 'Hybrid', 'Compact', 'Truck', 'Minivan', 'Convertible'];
 
