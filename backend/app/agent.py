@@ -38,14 +38,26 @@ class MultistepCarAgent:
             trace_agent_step("interview_complete", {"preferences": form_data})
 
         if self.state == "INTERVIEW":
-            text_response = (
-                "Welcome to the AI Car Matchmaker! Please fill out your preferences "
-                "below so I can research the best options for you."
-            )
-            a2ui_events.append({
-                "a2ui_type": "RENDER_MCP_APP",
-                "app": MCPPreferenceFormApp().model_dump(),
-            })
+            # If user provided input, try LLM response
+            if user_input and user_input.strip():
+                llm_response = await self._get_llm_response(
+                    user_input,
+                    {"state": self.state, "preferences": self.user_preferences}
+                )
+                
+                if llm_response:
+                    text_response = llm_response
+                else:
+                    text_response = "We apologize, but our AI assistant is currently under maintenance. Please feel free to explore different options and categories that may suit your preferences."
+            else:
+                text_response = (
+                    "Welcome to the AI Car Matchmaker! Please fill out your preferences "
+                    "below so I can research the best options for you."
+                )
+                a2ui_events.append({
+                    "a2ui_type": "RENDER_MCP_APP",
+                    "app": MCPPreferenceFormApp().model_dump(),
+                })
 
         elif self.state == "RESEARCH":
             a2ui_events.extend(await self._run_research())
@@ -56,13 +68,38 @@ class MultistepCarAgent:
         elif self.state == "RECOMMENDATION":
             if form_data and "checkout_car_id" in form_data:
                 return self._handle_checkout(form_data)
-            text_response = (
-                "Your recommendations are ready above. Click **Book / Purchase Now** "
-                "on any car to proceed to our safe mock checkout."
-            )
+            
+            # If user provided input, try LLM response
+            if user_input and user_input.strip():
+                llm_response = await self._get_llm_response(
+                    user_input,
+                    {"state": self.state, "preferences": self.user_preferences}
+                )
+                
+                if llm_response:
+                    text_response = llm_response
+                else:
+                    text_response = "We apologize, but our AI assistant is currently under maintenance. Please feel free to explore different options and categories that may suit your preferences."
+            else:
+                text_response = (
+                    "Your recommendations are ready above. Click **Book / Purchase Now** "
+                    "on any car to proceed to our safe mock checkout."
+                )
 
         elif self.state == "CHECKOUT":
-            text_response = "Checkout complete! Would you like to start a new search?"
+            # If user provided input, try LLM response
+            if user_input and user_input.strip():
+                llm_response = await self._get_llm_response(
+                    user_input,
+                    {"state": self.state, "preferences": self.user_preferences}
+                )
+                
+                if llm_response:
+                    text_response = llm_response
+                else:
+                    text_response = "We apologize, but our AI assistant is currently under maintenance. Please feel free to explore different options and categories that may suit your preferences."
+            else:
+                text_response = "Checkout complete! Would you like to start a new search?"
 
         return {
             "text": text_response,
@@ -179,23 +216,23 @@ class MultistepCarAgent:
         if not catalog_items:
             min_price = price_range["min_rental"] if is_rental else price_range["min_purchase"]
             text = (
-                f"No **{category}** cars found within your budget of **${budget:,.0f}** "
+                f"No {category} cars found within your budget of ${budget:,.0f} "
                 f"({'rental/day' if is_rental else 'purchase'}). "
-                f"Prices in this category start at **${min_price:,.0f}**. "
+                f"Prices in this category start at ${min_price:,.0f}. "
                 "Try increasing your budget or switching to Rent if you meant a daily rate."
             )
         elif self.budget_relaxed:
             min_price = price_range["min_rental"] if is_rental else price_range["min_purchase"]
             text = (
-                f"Your budget of **${budget:,.0f}** is below the minimum "
-                f"**${min_price:,.0f}** for **{category}** "
+                f"Your budget of ${budget:,.0f} is below the minimum "
+                f"${min_price:,.0f} for {category} "
                 f"({'rental/day' if is_rental else 'purchase'}). "
                 "Showing the best available options in your category instead:"
             )
         else:
             text = (
-                f"I evaluated options matching your requirements for a **{category}** "
-                f"under **${budget:,.0f}** ({'Rental/day' if is_rental else 'Purchase'}). "
+                f"I evaluated options matching your requirements for a {category} "
+                f"under ${budget:,.0f} ({'Rental/day' if is_rental else 'Purchase'}). "
                 "Here are top-ranked matches:"
             )
 
