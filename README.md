@@ -9,26 +9,36 @@
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    React Client App                          │
-│  ┌─────────────────────┐  ┌──────────────────────────────┐  │
-│  │ A2UI React Renderer │  │ MCP App Container            │  │
-│  │ (Catalog & Status)  │  │ (Form & Checkout)            │  │
-│  └──────────┬──────────┘  └──────────────┬───────────────┘  │
-└─────────────┼────────────────────────────┼──────────────────┘
-              │ A2UI JSON Streams          │ MCP UI Events
-┌─────────────▼────────────────────────────▼──────────────────┐
-│              Agentic Orchestrator Backend                    │
-│         State: INTERVIEW → RESEARCH → RECOMMENDATION         │
-│                        → CHECKOUT                            │
-└──────┬──────────────────┬──────────────────┬────────────────┘
-       │                  │                  │
-┌──────▼──────┐  ┌────────▼────────┐  ┌───────▼──────────────┐
-│ Marketplace │  │ MCP Apps Server │  │ OpenTelemetry /      │
-│ API (120+   │  │ (Form/Checkout) │  │ Langfuse Trace       │
-│ Listings)   │  │                 │  │                      │
-└─────────────┘  └─────────────────┘  └──────────────────────┘
+```mermaid
+flowchart TD
+    classDef client fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#fff;
+    classDef backend fill:#0f172a,stroke:#818cf8,stroke-width:2px,color:#fff;
+    classDef service fill:#1e1b4b,stroke:#a855f7,stroke-width:2px,color:#fff;
+
+    subgraph FRONTEND [" 🖥️ React Client Application "]
+        direction LR
+        A2UI["A2UI React Renderer<br/><i>(Catalog & Live Status)</i>"]
+        MCP_UI["MCP App Container<br/><i>(Preference Form & Checkout)</i>"]
+    end
+
+    subgraph BACKEND [" ⚙️ Agentic Orchestrator Backend (FastAPI) "]
+        STATE["<b>Multistep State Machine</b><br/>INTERVIEW ➔ RESEARCH ➔ RECOMMENDATION ➔ CHECKOUT"]
+    end
+
+    subgraph SERVICES [" 🔌 External & Hybrid Data Services "]
+        AUTO["Auto.dev API<br/><i>(120+ Listings)</i>"]
+        MCP_SRV["MCP Apps Server<br/><i>(Form / Checkout Specs)</i>"]
+        OTEL["OpenTelemetry & Langfuse<br/><i>(Observability & Traces)</i>"]
+    end
+
+    FRONTEND -->|"A2UI JSON Streams & MCP Events"| BACKEND
+    BACKEND --> AUTO
+    BACKEND --> MCP_SRV
+    BACKEND --> OTEL
+
+    class FRONTEND,A2UI,MCP_UI client;
+    class BACKEND,STATE backend;
+    class SERVICES,AUTO,MCP_SRV,OTEL service;
 ```
 
 ## Features
