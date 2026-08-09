@@ -50,6 +50,12 @@ async def chat_endpoint(req: ChatRequest) -> ChatResponse:
     return ChatResponse(**response)
 
 
+@app.get("/")
+@app.head("/")
+def read_root():
+    return {"status": "ok", "service": "MatchMyDrive API"}
+
+
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "healthy", "service": "AI Car Matchmaker Backend"}
