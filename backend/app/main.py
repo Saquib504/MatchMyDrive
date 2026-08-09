@@ -1,9 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from typing import Optional
 
 from app.agent import MultistepCarAgent
 from app.database import init_db, update_cars_with_vins
+from app.hybrid_data_service import hybrid_data_service
 
 app = FastAPI(
     title="AI Car Matchmaker Agent Backend",
@@ -50,6 +52,23 @@ async def chat_endpoint(req: ChatRequest) -> ChatResponse:
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "healthy", "service": "AI Car Matchmaker Backend"}
+
+
+@app.get("/api/cars")
+async def get_cars(
+    category: Optional[str] = None,
+    max_budget: Optional[float] = None,
+    is_rental: bool = True,
+    limit: int = 50
+):
+    """Get cars from hybrid data service"""
+    cars = await hybrid_data_service.query_cars(
+        category=category,
+        max_budget=max_budget,
+        is_rental=is_rental,
+        limit=limit
+    )
+    return {"cars": cars}
 
 
 @app.delete("/api/session/{session_id}")
