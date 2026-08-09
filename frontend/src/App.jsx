@@ -79,7 +79,6 @@ function CarCard({ car, onSelect, intent }) {
         overflow: 'hidden',
         cursor: 'pointer',
         border: `1px solid ${colors.carbon700}`,
-        transition: 'all 0.3s ease',
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = 'translateY(-4px)';
@@ -596,38 +595,329 @@ function BookingModal({ car, onClose, intent }) {
   );
 }
 
+// MCP Preference Form Component
+function MCPPreferenceForm({ app, onSubmit }) {
+  const [formData, setFormData] = useState({
+    intent: 'Rent',
+    category: '',
+    budget: '',
+    target_date: '',
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit(formData);
+  };
+
+  return (
+    <div style={{
+      background: colors.carbon,
+      borderRadius: '12px',
+      padding: '16px',
+      border: `1px solid ${colors.carbon600}`,
+    }}>
+      <h4 style={{
+        color: colors.surface,
+        fontSize: '14px',
+        fontWeight: '700',
+        margin: '0 0 12px 0',
+      }}>
+        {app.title || 'Car Preferences'}
+      </h4>
+      <form onSubmit={handleSubmit}>
+        <div style={{ marginBottom: '12px' }}>
+          <label style={{ color: colors.carbon500, fontSize: '12px', marginBottom: '4px', display: 'block' }}>
+            Intent
+          </label>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            {app.fields?.intent?.options?.map((option) => (
+              <button
+                key={option}
+                type="button"
+                onClick={() => setFormData(prev => ({ ...prev, intent: option }))}
+                style={{
+                  flex: 1,
+                  padding: '8px',
+                  borderRadius: '8px',
+                  border: formData.intent === option ? `2px solid ${colors.amber}` : `1px solid ${colors.carbon600}`,
+                  background: formData.intent === option ? `rgba(232, 160, 32, 0.2)` : 'transparent',
+                  color: formData.intent === option ? colors.amber : colors.sand,
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                }}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div style={{ marginBottom: '12px' }}>
+          <label style={{ color: colors.carbon500, fontSize: '12px', marginBottom: '4px', display: 'block' }}>
+            Category
+          </label>
+          <select
+            value={formData.category}
+            onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+            style={{
+              width: '100%',
+              background: colors.carbon800,
+              border: `1px solid ${colors.carbon600}`,
+              borderRadius: '8px',
+              padding: '8px 12px',
+              color: formData.category ? colors.surface : colors.carbon500,
+              fontSize: '14px',
+              outline: 'none',
+            }}
+          >
+            <option value="">Select a category</option>
+            {app.fields?.category?.options?.map((cat) => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
+        </div>
+        <div style={{ marginBottom: '12px' }}>
+          <label style={{ color: colors.carbon500, fontSize: '12px', marginBottom: '4px', display: 'block' }}>
+            Budget ({formData.intent === 'Rent' ? '$/day' : '$ total'})
+          </label>
+          <input
+            type="number"
+            value={formData.budget}
+            onChange={(e) => setFormData(prev => ({ ...prev, budget: parseFloat(e.target.value) }))}
+            placeholder={formData.intent === 'Rent' ? 'Daily rate (e.g., 200)' : 'Total budget (e.g., 50000)'}
+            min={formData.intent === 'Rent' ? app.fields?.budget?.min_rent : app.fields?.budget?.min_buy}
+            style={{
+              width: '100%',
+              background: colors.carbon800,
+              border: `1px solid ${colors.carbon600}`,
+              borderRadius: '8px',
+              padding: '8px 12px',
+              color: formData.budget ? colors.surface : colors.carbon500,
+              fontSize: '14px',
+              outline: 'none',
+            }}
+          />
+        </div>
+        <div style={{ marginBottom: '12px' }}>
+          <label style={{ color: colors.carbon500, fontSize: '12px', marginBottom: '4px', display: 'block' }}>
+            Target Date
+          </label>
+          <input
+            type="date"
+            value={formData.target_date}
+            onChange={(e) => setFormData(prev => ({ ...prev, target_date: e.target.value }))}
+            style={{
+              width: '100%',
+              background: colors.carbon800,
+              border: `1px solid ${colors.carbon600}`,
+              borderRadius: '8px',
+              padding: '8px 12px',
+              color: colors.surface,
+              fontSize: '14px',
+              outline: 'none',
+            }}
+          />
+        </div>
+        <button
+          type="submit"
+          style={{
+            width: '100%',
+            background: colors.amber,
+            color: colors.carbon,
+            padding: '10px',
+            borderRadius: '8px',
+            fontWeight: '700',
+            fontSize: '14px',
+            cursor: 'pointer',
+            border: 'none',
+          }}
+        >
+          Submit Preferences
+        </button>
+      </form>
+    </div>
+  );
+}
+
+// MCP Checkout App Component
+function MCPCheckoutApp({ app, onSubmit }) {
+  const [formData, setFormData] = useState({
+    cardholder_name: '',
+    mock_card_number: '',
+    exp_date: '',
+    cvv: '',
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit({
+      ...formData,
+      checkout_car_id: app.car_id,
+      checkout_confirmed: true,
+    });
+  };
+
+  return (
+    <div style={{
+      background: colors.carbon,
+      borderRadius: '12px',
+      padding: '16px',
+      border: `1px solid ${colors.carbon600}`,
+    }}>
+      <h4 style={{
+        color: colors.surface,
+        fontSize: '14px',
+        fontWeight: '700',
+        margin: '0 0 12px 0',
+      }}>
+        {app.title || 'Secure Checkout'}
+      </h4>
+      {app.is_safe_sandbox && (
+        <div style={{
+          background: 'rgba(34, 197, 94, 0.1)',
+          border: `1px solid #22c55e`,
+          borderRadius: '8px',
+          padding: '8px',
+          marginBottom: '12px',
+        }}>
+          <p style={{ color: '#22c55e', fontSize: '11px', margin: 0 }}>
+            🔒 Safe Sandbox Mode - No real charges
+          </p>
+        </div>
+      )}
+      <div style={{ marginBottom: '12px', padding: '8px', background: colors.carbon800, borderRadius: '8px' }}>
+        <p style={{ color: colors.sand, fontSize: '12px', margin: '0 0 4px 0' }}>
+          {app.car_model || 'Selected Vehicle'}
+        </p>
+        <p style={{ color: colors.amber, fontSize: '18px', fontWeight: '700', margin: 0 }}>
+          ${app.amount?.toLocaleString() || '0'}
+        </p>
+        <p style={{ color: colors.carbon500, fontSize: '11px', margin: '4px 0 0 0' }}>
+          {app.mode || 'Purchase'}
+        </p>
+      </div>
+      <form onSubmit={handleSubmit}>
+        <div style={{ marginBottom: '12px' }}>
+          <label style={{ color: colors.carbon500, fontSize: '12px', marginBottom: '4px', display: 'block' }}>
+            Cardholder Name
+          </label>
+          <input
+            type="text"
+            value={formData.cardholder_name}
+            onChange={(e) => setFormData(prev => ({ ...prev, cardholder_name: e.target.value }))}
+            placeholder="John Doe"
+            required
+            style={{
+              width: '100%',
+              background: colors.carbon800,
+              border: `1px solid ${colors.carbon600}`,
+              borderRadius: '8px',
+              padding: '8px 12px',
+              color: colors.surface,
+              fontSize: '14px',
+              outline: 'none',
+            }}
+          />
+        </div>
+        <div style={{ marginBottom: '12px' }}>
+          <label style={{ color: colors.carbon500, fontSize: '12px', marginBottom: '4px', display: 'block' }}>
+            Card Number (Mock)
+          </label>
+          <input
+            type="text"
+            value={formData.mock_card_number}
+            onChange={(e) => setFormData(prev => ({ ...prev, mock_card_number: e.target.value }))}
+            placeholder="4242 4242 4242 4242"
+            required
+            style={{
+              width: '100%',
+              background: colors.carbon800,
+              border: `1px solid ${colors.carbon600}`,
+              borderRadius: '8px',
+              padding: '8px 12px',
+              color: colors.surface,
+              fontSize: '14px',
+              outline: 'none',
+            }}
+          />
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+          <div>
+            <label style={{ color: colors.carbon500, fontSize: '12px', marginBottom: '4px', display: 'block' }}>
+              Expiry
+            </label>
+            <input
+              type="text"
+              value={formData.exp_date}
+              onChange={(e) => setFormData(prev => ({ ...prev, exp_date: e.target.value }))}
+              placeholder="MM/YY"
+              required
+              style={{
+                width: '100%',
+                background: colors.carbon800,
+                border: `1px solid ${colors.carbon600}`,
+                borderRadius: '8px',
+                padding: '8px 12px',
+                color: colors.surface,
+                fontSize: '14px',
+                outline: 'none',
+              }}
+            />
+          </div>
+          <div>
+            <label style={{ color: colors.carbon500, fontSize: '12px', marginBottom: '4px', display: 'block' }}>
+              CVV
+            </label>
+            <input
+              type="text"
+              value={formData.cvv}
+              onChange={(e) => setFormData(prev => ({ ...prev, cvv: e.target.value }))}
+              placeholder="123"
+              required
+              style={{
+                width: '100%',
+                background: colors.carbon800,
+                border: `1px solid ${colors.carbon600}`,
+                borderRadius: '8px',
+                padding: '8px 12px',
+                color: colors.surface,
+                fontSize: '14px',
+                outline: 'none',
+              }}
+            />
+          </div>
+        </div>
+        <button
+          type="submit"
+          style={{
+            width: '100%',
+            background: colors.amber,
+            color: colors.carbon,
+            padding: '10px',
+            borderRadius: '8px',
+            fontWeight: '700',
+            fontSize: '14px',
+            cursor: 'pointer',
+            border: 'none',
+          }}
+        >
+          Pay ${app.amount?.toLocaleString() || '0'} (Mock)
+        </button>
+      </form>
+    </div>
+  );
+}
+
 // Chat Panel Component
 function ChatPanel({ open, onClose, sessionId, onPreferencesSubmit }) {
-  const [messages, setMessages] = useState([
-    {
-      role: 'agent',
-      text: "Hi! I'm your AI car matchmaker. Let me help you find the perfect car. Please tell me your preferences:",
-    },
-  ]);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [backendOk, setBackendOk] = useState(null);
-  const [showPreferences, setShowPreferences] = useState(true);
-  const [preferences, setPreferences] = useState({
-    intent: 'Rent',
-    category: 'SUV',
-    budget: '2000',
-    target_date: '',
-  });
   const bottomRef = useRef(null);
+  const initRef = useRef(false);
 
-  useEffect(() => {
-    if (!open) return;
-    fetch(`${API_URL}/health`)
-      .then((r) => setBackendOk(r.ok))
-      .catch(() => setBackendOk(false));
-  }, [open]);
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, loading]);
-
-  const sendToAgent = useCallback(async (text, formData = null) => {
+  const sendToAgent = useCallback(async (text, formData = null, shouldScroll = false) => {
     setLoading(true);
     try {
       const res = await fetch(`${API_URL}/api/chat`, {
@@ -635,34 +925,118 @@ function ChatPanel({ open, onClose, sessionId, onPreferencesSubmit }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ session_id: sessionId, message: text, form_data: formData }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: 'agent',
-          text: data.text,
-        },
-      ]);
       
-      // Check if response contains car results
-      if (data.a2ui_events) {
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        console.error('Backend error:', errorData);
+        throw new Error(errorData.detail || `HTTP ${res.status}: ${res.statusText}`);
+      }
+      
+      const data = await res.json();
+      
+      // Validate response structure
+      if (!data.text && !data.a2ui_events) {
+        throw new Error('Invalid response format from server');
+      }
+      
+      
+      // Handle A2UI events
+      if (data.a2ui_events && data.a2ui_events.length > 0) {
+        // Check for MCP Apps to render
+        const mcpAppEvent = data.a2ui_events.find(e => e.a2ui_type === 'RENDER_MCP_APP');
+        if (mcpAppEvent && mcpAppEvent.app) {
+          // Use greeting if text is empty, otherwise use the text
+          const displayText = data.text || "Welcome to MATCH MY DRIVE! 🚗 I'm here to help you find the perfect car. You can either tell me what you're looking for in the chat, or use the form below to specify your preferences.";
+          
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: 'agent',
+              text: displayText,
+              mcpApp: mcpAppEvent.app,
+            },
+          ]);
+          return;
+        }
+        
+        // Check for status updates (don't return, let catalog render too)
+        const statusEvent = data.a2ui_events.find(e => e.a2ui_type === 'UPDATE_STATUS');
+        if (statusEvent && statusEvent.status_steps) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: 'agent',
+              text: data.text,
+              statusSteps: statusEvent.status_steps,
+            },
+          ]);
+        }
+        
+        // Check for car catalog results
         const catalogEvent = data.a2ui_events.find(e => e.a2ui_type === 'RENDER_CATALOG_GRID');
         if (catalogEvent && catalogEvent.items && catalogEvent.items.length > 0) {
           if (onPreferencesSubmit) {
             onPreferencesSubmit(catalogEvent.items);
           }
+          // Scroll to fleet section if requested
+          if (shouldScroll) {
+            const fleetSection = document.getElementById('fleet-section');
+            if (fleetSection) {
+              fleetSection.scrollIntoView({ behavior: 'smooth' });
+            } else {
+            }
+          }
+          // Only add additional message if text response is empty
+          if (!data.text) {
+            setMessages((prev) => [
+              ...prev,
+              {
+                role: 'agent',
+                text: `I found ${catalogEvent.items.length} cars for you! They're now displayed in the main view.`,
+              },
+            ]);
+          }
         }
+      } else {
+        // No A2UI events, just add text message
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: 'agent',
+            text: data.text || 'Processing your request...',
+          },
+        ]);
       }
-    } catch {
+    } catch (err) {
+      console.error('Chat error:', err);
       setMessages((prev) => [
         ...prev,
-        { role: 'agent', text: 'Unable to reach the agent. Make sure the backend is running.' },
+        {
+          role: 'agent',
+          text: `Sorry, I encountered an error: ${err.message}. Please try again.`,
+        },
       ]);
     } finally {
       setLoading(false);
     }
   }, [sessionId, onPreferencesSubmit]);
+
+  useEffect(() => {
+    if (!open) return;
+    fetch(`${API_URL}/health`)
+      .then((r) => setBackendOk(r.ok))
+      .catch(() => setBackendOk(false));
+    
+    // Send initial empty message to trigger form rendering (only once)
+    if (!initRef.current) {
+      sendToAgent('', null);
+      initRef.current = true;
+    }
+  }, [open, sendToAgent]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, loading]);
 
   function handleSend() {
     const text = input.trim();
@@ -670,13 +1044,6 @@ function ChatPanel({ open, onClose, sessionId, onPreferencesSubmit }) {
     setMessages((prev) => [...prev, { role: 'user', text }]);
     setInput('');
     sendToAgent(text);
-  }
-
-  function handlePreferencesSubmit(e) {
-    e.preventDefault();
-    setShowPreferences(false);
-    setMessages((prev) => [...prev, { role: 'user', text: 'Submitted preferences' }]);
-    sendToAgent('', preferences);
   }
 
   function handleReset() {
@@ -687,7 +1054,6 @@ function ChatPanel({ open, onClose, sessionId, onPreferencesSubmit }) {
         text: "Session reset! Tell me what kind of car you're looking for.",
       },
     ]);
-    setShowPreferences(true);
   }
 
   return (
@@ -790,120 +1156,6 @@ function ChatPanel({ open, onClose, sessionId, onPreferencesSubmit }) {
           </button>
         </div>
 
-        {/* Preferences Form */}
-        {showPreferences && (
-          <form onSubmit={handlePreferencesSubmit} style={{ padding: '16px', borderBottom: `1px solid ${colors.carbon700}` }}>
-            <div style={{ marginBottom: '12px' }}>
-              <label style={{ color: colors.carbon500, fontSize: '12px', marginBottom: '4px', display: 'block' }}>
-                Intent
-              </label>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                {['Rent', 'Buy'].map((option) => (
-                  <button
-                    key={option}
-                    type="button"
-                    onClick={() => setPreferences(prev => ({ ...prev, intent: option }))}
-                    style={{
-                      flex: 1,
-                      padding: '8px',
-                      borderRadius: '8px',
-                      border: preferences.intent === option ? `2px solid ${colors.amber}` : `1px solid ${colors.carbon600}`,
-                      background: preferences.intent === option ? `rgba(232, 160, 32, 0.2)` : 'transparent',
-                      color: preferences.intent === option ? colors.amber : colors.sand,
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {option}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div style={{ marginBottom: '12px' }}>
-              <label style={{ color: colors.carbon500, fontSize: '12px', marginBottom: '4px', display: 'block' }}>
-                Category
-              </label>
-              <select
-                value={preferences.category}
-                onChange={(e) => setPreferences(prev => ({ ...prev, category: e.target.value }))}
-                style={{
-                  width: '100%',
-                  background: colors.carbon,
-                  border: `1px solid ${colors.carbon600}`,
-                  borderRadius: '8px',
-                  padding: '8px 12px',
-                  color: colors.surface,
-                  fontSize: '14px',
-                  outline: 'none',
-                }}
-              >
-                {CATEGORIES.filter(c => c !== 'All').map((cat) => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-            </div>
-            <div style={{ marginBottom: '12px' }}>
-              <label style={{ color: colors.carbon500, fontSize: '12px', marginBottom: '4px', display: 'block' }}>
-                Budget ({preferences.intent === 'Rent' ? '$/day' : '$ total'})
-              </label>
-              <input
-                type="number"
-                value={preferences.budget}
-                onChange={(e) => setPreferences(prev => ({ ...prev, budget: e.target.value }))}
-                style={{
-                  width: '100%',
-                  background: colors.carbon,
-                  border: `1px solid ${colors.carbon600}`,
-                  borderRadius: '8px',
-                  padding: '8px 12px',
-                  color: colors.surface,
-                  fontSize: '14px',
-                  outline: 'none',
-                }}
-              />
-            </div>
-            <div style={{ marginBottom: '12px' }}>
-              <label style={{ color: colors.carbon500, fontSize: '12px', marginBottom: '4px', display: 'block' }}>
-                Target Date
-              </label>
-              <input
-                type="date"
-                value={preferences.target_date}
-                onChange={(e) => setPreferences(prev => ({ ...prev, target_date: e.target.value }))}
-                style={{
-                  width: '100%',
-                  background: colors.carbon,
-                  border: `1px solid ${colors.carbon600}`,
-                  borderRadius: '8px',
-                  padding: '8px 12px',
-                  color: colors.surface,
-                  fontSize: '14px',
-                  outline: 'none',
-                }}
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                width: '100%',
-                background: colors.amber,
-                color: colors.carbon,
-                padding: '10px',
-                borderRadius: '8px',
-                fontWeight: '700',
-                fontSize: '14px',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                border: 'none',
-                opacity: loading ? 0.5 : 1,
-              }}
-            >
-              {loading ? 'Searching...' : 'Find Cars'}
-            </button>
-          </form>
-        )}
-
         <div style={{
           flex: 1,
           overflowY: 'auto',
@@ -917,14 +1169,79 @@ function ChatPanel({ open, onClose, sessionId, onPreferencesSubmit }) {
               <div
                 style={{
                   maxWidth: '85%',
-                  background: msg.role === 'user' ? colors.amber : 'transparent',
-                  color: msg.role === 'user' ? colors.carbon : colors.surface,
+                  background: msg.isError ? 'rgba(239, 68, 68, 0.1)' : msg.role === 'user' ? colors.amber : 'transparent',
+                  border: msg.isError ? `1px solid #ef4444` : 'none',
+                  color: msg.isError ? '#ef4444' : msg.role === 'user' ? colors.carbon : colors.surface,
                   borderRadius: '16px',
                   borderBottomRightRadius: msg.role === 'user' ? '4px' : '16px',
                   padding: '16px',
                 }}
               >
                 <p style={{ fontSize: '14px', lineHeight: 1.5, margin: 0 }}>{msg.text}</p>
+                
+                {/* Render MCP App if present */}
+                {msg.mcpApp && (
+                  <div style={{ marginTop: '12px' }}>
+                    {msg.mcpApp.app_id === 'app_car_preference_interview' ? (
+                      <MCPPreferenceForm 
+                        app={msg.mcpApp} 
+                        onSubmit={(formData) => {
+                          setMessages((prev) => [...prev, { role: 'user', text: 'Submitted preferences' }]);
+                          sendToAgent('', formData, true); // Pass true to indicate it should scroll
+                        }}
+                      />
+                    ) : msg.mcpApp.app_id === 'app_mock_checkout' ? (
+                      <MCPCheckoutApp 
+                        app={msg.mcpApp}
+                        onSubmit={(formData) => {
+                          setMessages((prev) => [...prev, { role: 'user', text: 'Checkout submitted' }]);
+                          sendToAgent('', formData);
+                        }}
+                      />
+                    ) : (
+                      <div style={{ 
+                        padding: '12px', 
+                        background: colors.carbon, 
+                        borderRadius: '8px',
+                        border: `1px solid ${colors.carbon600}`
+                      }}>
+                        <p style={{ fontSize: '12px', color: colors.sand, margin: 0 }}>
+                          MCP App: {msg.mcpApp.title || msg.mcpApp.app_id}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Render status steps if present */}
+                {msg.statusSteps && (
+                  <div style={{ marginTop: '12px' }}>
+                    {msg.statusSteps.map((step, idx) => (
+                      <div key={idx} style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '8px',
+                        marginBottom: '8px',
+                        fontSize: '12px'
+                      }}>
+                        <span style={{
+                          width: '16px',
+                          height: '16px',
+                          borderRadius: '50%',
+                          background: step.status === 'COMPLETED' ? '#22c55e' : 
+                                     step.status === 'IN_PROGRESS' ? colors.amber : colors.carbon600,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '10px',
+                        }}>
+                          {step.status === 'COMPLETED' ? '✓' : step.status === 'IN_PROGRESS' ? '○' : '○'}
+                        </span>
+                        <span style={{ color: colors.sand }}>{step.step}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -1011,6 +1328,32 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [intent, setIntent] = useState('Rent'); // Rent or Buy
   const [targetDate, setTargetDate] = useState(new Date().toISOString().split('T')[0]); // Default to today
+  const [currentPage, setCurrentPage] = useState('home'); // 'home', 'about'
+  const fleetSectionRef = useRef(null);
+  const [locationsOpen, setLocationsOpen] = useState(false);
+
+  // Navigation handlers
+  const handleFleetClick = () => {
+    setCurrentPage('home');
+    setTimeout(() => {
+      if (fleetSectionRef.current) {
+        fleetSectionRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
+  };
+
+  const handleLocationsClick = () => {
+    setLocationsOpen(!locationsOpen);
+  };
+
+  const handleAboutClick = () => {
+    setCurrentPage('about');
+  };
+
+  const handleBackToHome = () => {
+    setCurrentPage('home');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // Update maxPrice when intent changes
   useEffect(() => {
@@ -1029,36 +1372,17 @@ export default function App() {
   const loadCars = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          session_id: sessionId, 
-          message: '', 
-          form_data: { 
-            intent: intent,
-            category: activeCategory === 'All' ? 'SUV' : activeCategory,
-            budget: maxPrice.toString(),
-            target_date: targetDate || new Date().toISOString().split('T')[0]
-          } 
-        }),
-      });
+      const params = new URLSearchParams();
+      if (activeCategory !== 'All') {
+        params.append('category', activeCategory);
+      }
+      params.append('max_budget', maxPrice.toString());
+      params.append('is_rental', intent === 'Rent' ? 'true' : 'false');
+      
+      const res = await fetch(`${API_URL}/api/cars?${params.toString()}`);
       const data = await res.json();
       
-      console.log('Backend response:', data);
-      
-      // Extract cars from the response
-      if (data.a2ui_events) {
-        const catalogEvent = data.a2ui_events.find(e => e.a2ui_type === 'RENDER_CATALOG_GRID');
-        if (catalogEvent && catalogEvent.items) {
-          console.log('Cars from backend:', catalogEvent.items);
-          setCars(catalogEvent.items);
-        } else {
-          console.log('No RENDER_CATALOG_GRID event found');
-        }
-      } else {
-        console.log('No a2ui_events in response');
-      }
+      setCars(data.items || []);
     } catch (err) {
       console.error('Failed to load cars:', err);
     } finally {
@@ -1089,14 +1413,12 @@ export default function App() {
       c.model.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.make.toLowerCase().includes(searchQuery.toLowerCase());
     
-    console.log(`Filtering car: ${c.make} ${c.model}, matchCat: ${matchCat}, matchPrice: ${matchPrice}, matchSearch: ${matchSearch}`);
     
     return matchCat && matchPrice && matchSearch;
   }).sort((a, b) => (sortBy === 'price' 
     ? (intent === 'Rent' ? (a.daily_rental_rate || a.purchase_price * 0.01) - (b.daily_rental_rate || b.purchase_price * 0.01) : a.purchase_price - b.purchase_price) 
     : b.rating - a.rating));
   
-  console.log(`Total cars: ${cars.length}, Filtered cars: ${filtered.length}`);
 
   return (
     <div style={{ minHeight: '100vh', background: colors.carbon }}>
@@ -1114,7 +1436,6 @@ export default function App() {
         height: '64px',
         borderBottom: `1px solid ${colors.carbon800}`,
         background: 'rgba(13, 13, 15, 0.9)',
-        backdropFilter: 'blur(12px)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ color: colors.amber, fontSize: '20px', lineHeight: 1 }}>◆</span>
@@ -1128,47 +1449,45 @@ export default function App() {
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
-          <a href="#" style={{ color: colors.sand, fontSize: '14px', fontWeight: '500', textDecoration: 'none' }}>
+          <button 
+            onClick={handleFleetClick}
+            style={{ color: colors.sand, fontSize: '14px', fontWeight: '500', textDecoration: 'none', background: 'none', border: 'none', cursor: 'pointer' }}
+          >
             Fleet
-          </a>
-          <a href="#" style={{ color: colors.sand, fontSize: '14px', fontWeight: '500', textDecoration: 'none' }}>
-            Locations
-          </a>
-          <a href="#" style={{ color: colors.sand, fontSize: '14px', fontWeight: '500', textDecoration: 'none' }}>
-            About
-          </a>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <button
-            onClick={() => setChatOpen((o) => !o)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '8px 16px',
-              borderRadius: '20px',
-              fontSize: '12px',
-              fontWeight: '600',
-              border: chatOpen ? `1px solid ${colors.amber}` : `1px solid ${colors.carbon600}`,
-              background: chatOpen ? colors.amber : 'transparent',
-              color: chatOpen ? colors.carbon : colors.sand,
-              cursor: 'pointer',
-              transition: 'all 0.3s ease',
+          </button>
+          <button 
+            onClick={handleLocationsClick}
+            style={{ 
+              color: locationsOpen ? colors.amber : colors.sand, 
+              fontSize: '14px', 
+              fontWeight: '500', 
+              textDecoration: 'none', 
+              background: 'none', 
+              border: 'none', 
+              cursor: 'pointer' 
             }}
           >
-            <span>◆</span>
-            <span style={{
-              fontWeight: '700',
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-            }}>
-              AI Matchmaker
-            </span>
+            Locations
+          </button>
+          <button 
+            onClick={handleAboutClick}
+            style={{ 
+              color: currentPage === 'about' ? colors.amber : colors.sand, 
+              fontSize: '14px', 
+              fontWeight: '500', 
+              textDecoration: 'none', 
+              background: 'none', 
+              border: 'none', 
+              cursor: 'pointer' 
+            }}
+          >
+            About
           </button>
         </div>
       </nav>
 
-      {/* Hero */}
+      {/* Hero - Only show on home page */}
+      {currentPage === 'home' && (
       <section style={{
         position: 'relative',
         paddingTop: '64px',
@@ -1270,8 +1589,10 @@ export default function App() {
           </div>
         </div>
       </section>
+      )}
 
-      {/* Stats strip */}
+      {/* Stats strip - Only show on home page */}
+      {currentPage === 'home' && (
       <div style={{ background: colors.carbon800, borderTop: `1px solid ${colors.carbon700}`, borderBottom: `1px solid ${colors.carbon700}` }}>
         <div style={{
           maxWidth: '1280px',
@@ -1309,9 +1630,11 @@ export default function App() {
           ))}
         </div>
       </div>
+      )}
 
-      {/* Fleet section */}
-      <section style={{ maxWidth: '1280px', margin: '0 auto', padding: '56px 32px' }}>
+      {/* Fleet section - Only show on home page */}
+      {currentPage === 'home' && (
+      <section id="fleet-section" style={{ maxWidth: '1280px', margin: '0 auto', padding: '56px 32px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '40px' }}>
           {/* Intent Selector */}
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -1427,7 +1750,7 @@ export default function App() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '24px' }}>
+        <div ref={fleetSectionRef} style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '24px' }}>
           <h2 style={{
             color: colors.surface,
             fontSize: '48px',
@@ -1472,8 +1795,264 @@ export default function App() {
           </div>
         )}
       </section>
+      )}
 
-      {/* CTA band */}
+      {/* Locations Bubble Overlay */}
+      {locationsOpen && (
+        <div 
+          onClick={() => setLocationsOpen(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 100,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(0,0,0,0.7)',
+            backdropFilter: 'blur(4px)',
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: colors.carbon800,
+              border: `1px solid ${colors.carbon600}`,
+              borderRadius: '24px',
+              padding: '32px',
+              maxWidth: '800px',
+              width: '90%',
+              maxHeight: '80vh',
+              overflowY: 'auto',
+              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h2 style={{
+                color: colors.surface,
+                fontSize: '32px',
+                fontWeight: '800',
+                margin: 0,
+              }}>
+                Our Locations
+              </h2>
+              <button
+                onClick={() => setLocationsOpen(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: colors.carbon500,
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  padding: '8px',
+                }}
+              >
+                ×
+              </button>
+            </div>
+            
+            <p style={{ color: colors.carbon500, fontSize: '16px', marginBottom: '32px' }}>
+              Select a country to view available vehicles. Currently showing supported regions (coming soon).
+            </p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
+              {[
+                { name: 'Germany', flag: '🇩🇪', status: 'Coming Soon' },
+                { name: 'United States', flag: '🇺🇸', status: 'Coming Soon' },
+                { name: 'United Kingdom', flag: '🇬🇧', status: 'Coming Soon' },
+                { name: 'France', flag: '🇫🇷', status: 'Coming Soon' },
+                { name: 'Spain', flag: '🇪🇸', status: 'Coming Soon' },
+                { name: 'Italy', flag: '🇮🇹', status: 'Coming Soon' },
+                { name: 'Netherlands', flag: '🇳🇱', status: 'Coming Soon' },
+                { name: 'Switzerland', flag: '🇨🇭', status: 'Coming Soon' },
+                { name: 'Austria', flag: '🇦🇹', status: 'Coming Soon' },
+                { name: 'Belgium', flag: '🇧🇪', status: 'Coming Soon' },
+                { name: 'Sweden', flag: '🇸🇪', status: 'Coming Soon' },
+                { name: 'Norway', flag: '🇳🇴', status: 'Coming Soon' },
+              ].map((country) => (
+                <div
+                  key={country.name}
+                  style={{
+                    background: colors.carbon700,
+                    border: `1px solid ${colors.carbon600}`,
+                    borderRadius: '12px',
+                    padding: '16px',
+                    cursor: 'not-allowed',
+                    opacity: 0.7,
+                    textAlign: 'center',
+                  }}
+                >
+                  <div style={{ fontSize: '32px', marginBottom: '8px' }}>{country.flag}</div>
+                  <h3 style={{ color: colors.surface, fontSize: '14px', fontWeight: '700', margin: '0 0 6px 0' }}>
+                    {country.name}
+                  </h3>
+                  <span style={{ 
+                    color: colors.carbon500, 
+                    fontSize: '10px', 
+                    fontWeight: '600',
+                    padding: '2px 8px',
+                    background: colors.carbon600,
+                    borderRadius: '8px',
+                  }}>
+                    {country.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* About Page */}
+      {currentPage === 'about' && (
+        <section style={{ padding: '120px 32px', minHeight: 'calc(100vh - 64px)' }}>
+          <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+            <button 
+              onClick={handleBackToHome}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: colors.amber,
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                marginBottom: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              ← Back to Home
+            </button>
+            
+            <h1 style={{
+              color: colors.surface,
+              fontSize: '56px',
+              fontWeight: 900,
+              letterSpacing: '0.05em',
+              textTransform: 'uppercase',
+              marginBottom: '16px',
+            }}>
+              About MATCH MY DRIVE
+            </h1>
+            <p style={{ color: colors.carbon500, fontSize: '18px', marginBottom: '48px' }}>
+              AI-Powered Car Matchmaker for the Modern Traveler
+            </p>
+
+            <div style={{ marginBottom: '48px' }}>
+              <h2 style={{ color: colors.surface, fontSize: '32px', fontWeight: '800', marginBottom: '16px' }}>
+                Our Mission
+              </h2>
+              <p style={{ color: colors.sand, fontSize: '16px', lineHeight: 1.8, marginBottom: '24px' }}>
+                MATCH MY DRIVE leverages cutting-edge AI technology to help you find the perfect vehicle for your needs. Whether you're looking to rent a car for a weekend getaway or buy your dream vehicle, our intelligent system analyzes your preferences and matches you with the best options available.
+              </p>
+            </div>
+
+            <div style={{ marginBottom: '48px' }}>
+              <h2 style={{ color: colors.surface, fontSize: '32px', fontWeight: '800', marginBottom: '16px' }}>
+                Key Features
+              </h2>
+              <ul style={{ color: colors.sand, fontSize: '16px', lineHeight: 1.8, listStyle: 'none', padding: 0 }}>
+                <li style={{ marginBottom: '12px', display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                  <span style={{ color: colors.amber, fontSize: '20px' }}>◆</span>
+                  <span><strong>Automatic LLM Fallback:</strong> Multi-provider AI ensures reliability even when one service is down</span>
+                </li>
+                <li style={{ marginBottom: '12px', display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                  <span style={{ color: colors.amber, fontSize: '20px' }}>◆</span>
+                  <span><strong>Natural Language Search:</strong> Just tell us what you want in plain English</span>
+                </li>
+                <li style={{ marginBottom: '12px', display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                  <span style={{ color: colors.amber, fontSize: '20px' }}>◆</span>
+                  <span><strong>Real-Time Data:</strong> Live listings from Auto.dev API with smart fallback</span>
+                </li>
+                <li style={{ marginBottom: '12px', display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                  <span style={{ color: colors.amber, fontSize: '20px' }}>◆</span>
+                  <span><strong>Smart Matching:</strong> AI-powered recommendations based on your preferences</span>
+                </li>
+                <li style={{ marginBottom: '12px', display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                  <span style={{ color: colors.amber, fontSize: '20px' }}>◆</span>
+                  <span><strong>200+ Vehicles:</strong> Extensive fleet across 10 categories and 10 brands</span>
+                </li>
+              </ul>
+            </div>
+
+            <div style={{ marginBottom: '48px' }}>
+              <h2 style={{ color: colors.surface, fontSize: '32px', fontWeight: '800', marginBottom: '16px' }}>
+                Technology Stack
+              </h2>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
+                {[
+                  'Python & FastAPI',
+                  'React & Vite',
+                  'Google Gemini AI',
+                  'Anthropic Claude',
+                  'OpenAI GPT-4o',
+                  'Auto.dev API',
+                  'MCP Apps Protocol',
+                  'A2UI Protocol',
+                  'SQLite Database',
+                  'Docker Compose',
+                ].map((tech) => (
+                  <div
+                    key={tech}
+                    style={{
+                      background: colors.carbon800,
+                      border: `1px solid ${colors.carbon700}`,
+                      borderRadius: '8px',
+                      padding: '12px 16px',
+                      color: colors.sand,
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      textAlign: 'center',
+                    }}
+                  >
+                    {tech}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '48px' }}>
+              <h2 style={{ color: colors.surface, fontSize: '32px', fontWeight: '800', marginBottom: '16px' }}>
+                Built for Amulate Summer Hackathon 2026
+              </h2>
+              <p style={{ color: colors.sand, fontSize: '16px', lineHeight: 1.8 }}>
+                This project demonstrates production-ready AI agent architecture with automatic fallback, graceful degradation, and cutting-edge protocols (MCP Apps & A2UI). Built to solve real-world reliability challenges in AI applications.
+              </p>
+            </div>
+
+            <div style={{ 
+              padding: '32px',
+              background: colors.carbon800,
+              border: `1px solid ${colors.carbon700}`,
+              borderRadius: '16px',
+              textAlign: 'center',
+            }}>
+              <h3 style={{ color: colors.surface, fontSize: '24px', fontWeight: '800', marginBottom: '16px' }}>
+                Ready to Find Your Perfect Match?
+              </h3>
+              <button 
+                onClick={handleBackToHome}
+                style={{
+                  background: colors.amber,
+                  color: colors.carbon,
+                  padding: '16px 40px',
+                  borderRadius: '16px',
+                  fontWeight: '800',
+                  fontSize: '16px',
+                  letterSpacing: '0.1em',
+                  cursor: 'pointer',
+                  border: 'none',
+                }}
+              >
+                Start Searching
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* CTA band - Only show on home page */}
+      {currentPage === 'home' && (
       <section style={{ background: colors.amber, padding: '56px 32px', textAlign: 'center' }}>
         <p style={{
           color: 'rgba(13, 13, 15, 0.6)',
@@ -1519,6 +2098,7 @@ export default function App() {
           Start Matching
         </button>
       </section>
+      )}
 
       {/* Footer */}
       <footer style={{ background: colors.carbon, borderTop: `1px solid ${colors.carbon800}`, padding: '40px 32px' }}>

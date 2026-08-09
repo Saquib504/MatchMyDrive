@@ -27,7 +27,6 @@ class AutoDevClient:
         limit: int = 10
     ) -> list[dict[str, Any]]:
         """Search vehicle listings with filters"""
-        print(f"DEBUG search_listings: enabled={self.enabled}")
         
         if not self.enabled:
             logger.warning("Auto.dev API not enabled")
@@ -47,7 +46,6 @@ class AutoDevClient:
         if max_price:
             params["retailListing.price"] = f"0-{max_price}"
         
-        print(f"DEBUG: API params: {params}")
         
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
@@ -59,33 +57,25 @@ class AutoDevClient:
                         "Content-Type": "application/json"
                     }
                 )
-                print(f"DEBUG: API status: {response.status_code}")
                 response.raise_for_status()
                 data = response.json()
-                print(f"DEBUG: API response type: {type(data)}")
                 
                 # Handle response structure according to docs
                 if isinstance(data, dict):
                     if "data" in data:
                         listings = data["data"]
-                        print(f"DEBUG: Found {len(listings)} listings")
                         return listings
                     else:
-                        print(f"DEBUG: Unknown keys: {list(data.keys())}")
                         return []
                 elif isinstance(data, list):
-                    print(f"DEBUG: Response is list with {len(data)} items")
                     return data
                 else:
-                    print(f"DEBUG: Unexpected type: {type(data)}")
                     return []
                     
         except httpx.HTTPError as e:
-            print(f"DEBUG: HTTP error: {e}")
             logger.error(f"Auto.dev API error: {e}")
             return []
         except Exception as e:
-            print(f"DEBUG: Exception: {e}")
             logger.error(f"Auto.dev API error: {e}")
             return []
     
