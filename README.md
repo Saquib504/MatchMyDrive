@@ -30,7 +30,7 @@
 
 - **Multistep Agent State Machine**: `INTERVIEW` → `RESEARCH` → `RECOMMENDATION` → `CHECKOUT`
 - **A2UI Protocol**: Streaming declarative JSON for live progress steps and catalog grids
-- **MCP Apps**: Interactive preference form and safe mock checkout rendered in-chat
+- **MCP Apps** (Mandatory per hackathon): Interactive preference form and safe mock checkout rendered in-chat
 - **Mock Marketplace**: 200 cars across 10 categories × 10 brands (SQLite)
 - **Trade-Off Matrix**: Compares top-rated vs best-value options
 - **Observability**: OpenTelemetry-style logging + optional Langfuse integration
@@ -120,8 +120,9 @@ ai-car-matchmaker/
 
 ## Hackathon Submission Checklist
 
+### Mandatory Requirements
 - [x] Multistep Agent Harness with explicit state machine
-- [x] MCP Apps: Preference form + mock checkout in-chat
+- [x] **MCP Apps (Mandatory)**: Preference form + mock checkout in-chat
 - [x] A2UI Protocol: Dynamic progress tracker + catalog grid
 - [x] 100+ Listing Mock Marketplace (200 cars, 10 categories, 10 brands)
 - [x] Full AI Observability hooks (Langfuse + OpenTelemetry logging)
@@ -131,6 +132,9 @@ ai-car-matchmaker/
 - [x] Real API Integration with Auto.dev (hybrid approach)
 - [x] Enhanced error handling and user feedback
 - [x] Smart image matching for car listings
+
+### Optional Features (Implemented)
+- [x] Marketplace API integration (Auto.dev) - Used regular API as allowed per requirements
 
 ## API Endpoints
 
