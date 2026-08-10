@@ -207,24 +207,6 @@ OPENAI_API_KEY=your_openai_key  # Fallback to OpenAI
 
 **Note**: The system works perfectly without any LLM API key using enhanced rule-based responses. LLM integration is optional and provides more natural, context-aware conversations.
 
-## Demo Video
-
-A complete demo video script is available at [DEMO_VIDEO_SCRIPT_FINAL.md](DEMO_VIDEO_SCRIPT_FINAL.md).
-
-**Script covers:**
-- Introduction to the application
-- Opening the AI assistant with MCP Preference Form
-- Form submission and research phase
-- Viewing car details with trade-off matrix
-- Mock checkout with MCP Checkout App
-- Natural language chat interaction
-- Category filtering (API vs database)
-- Technical details and observability
-
-**Duration:** 4-5 minutes
-
-**Recording checklist:** [DEMO_RECORDING_CHECKLIST.md](DEMO_RECORDING_CHECKLIST.md)
-
 ## License
 
 MIT — Built for Amulate Summer Hackathon 2026.
